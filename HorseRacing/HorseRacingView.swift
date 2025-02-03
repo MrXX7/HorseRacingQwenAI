@@ -10,37 +10,62 @@ import SwiftUI
 struct HorseRacingView: View {
     @State private var positions: [CGFloat] = [0, 0, 0, 0, 0]
     @State private var isRacing = false
+    @State private var winner: Int? = nil
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Horse Racing")
-                .font(.largeTitle)
+        ZStack {
+            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.green.opacity(0.2)]), startPoint: .top, endPoint: .bottom)
+                .edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 1) {
-                TrackView(horsePosition: $positions[0], isRacing: $isRacing)
-                TrackView(horsePosition: $positions[1], isRacing: $isRacing)
-                TrackView(horsePosition: $positions[2], isRacing: $isRacing)
-                TrackView(horsePosition: $positions[3], isRacing: $isRacing)
-                TrackView(horsePosition: $positions[4], isRacing: $isRacing)
-            }
-            .padding(.horizontal)
-            
-            Button(action: {
-                self.startRace()
-            }) {
-                Text(isRacing ? "Racing..." : "Start Race")
-                    .font(.title2)
-                    .padding()
-                    .background(isRacing ? Color.gray : Color.blue)
+            VStack(spacing: 20) {
+                Text("Horse Racing")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .shadow(color: .black, radius: 2, x: 0, y: 2)
+                
+                VStack(spacing: 10) {
+                    ForEach(0..<5) { index in
+                        TrackView(horsePosition: $positions[index], isRacing: $isRacing, horseColor: colors[index])
+                    }
+                }
+                .padding(.horizontal)
+                
+                if let winner = winner {
+                    Text("🏆 Horse \(winner + 1) wins!")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.yellow)
+                        .shadow(color: .black, radius: 2, x: 0, y: 2)
+                        .transition(.opacity)
+                }
+                
+                Button(action: {
+                    self.startRace()
+                }) {
+                    Text(isRacing ? "Racing..." : "Start Race")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(isRacing ? Color.gray : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .shadow(color: .black, radius: 2, x: 0, y: 2)
+                }
+                .disabled(isRacing)
+                .padding(.horizontal)
             }
-            .disabled(isRacing)
+            .padding(.vertical)
         }
     }
     
+    let colors: [Color] = [.red, .green, .blue, .orange, .purple]
+    
     func startRace() {
         isRacing = true
+        winner = nil
+        
         for index in positions.indices {
             let randomDuration = Double.random(in: 2...5)
             withAnimation(Animation.linear(duration: randomDuration)) {
@@ -48,10 +73,16 @@ struct HorseRacingView: View {
             }
         }
         
-        // Reset after race ends
+        // Determine the winner
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            positions = [0, 0, 0, 0, 0]
-            isRacing = false
+            let maxPosition = positions.max()
+            winner = positions.firstIndex(of: maxPosition!)
+            
+            // Reset after race ends
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                positions = [0, 0, 0, 0, 0]
+                isRacing = false
+            }
         }
     }
 }
@@ -59,16 +90,20 @@ struct HorseRacingView: View {
 struct TrackView: View {
     @Binding var horsePosition: CGFloat
     @Binding var isRacing: Bool
+    var horseColor: Color
 
     var body: some View {
         ZStack(alignment: .leading) {
             Rectangle()
-                .frame(width: 300, height: 2)
+                .frame(width: 300, height: 4)
                 .foregroundColor(.black)
+                .shadow(color: .gray, radius: 2, x: 0, y: 2)
             
             Text("🏇🏼")
-                .position(x: horsePosition, y: -10)
+                .font(.system(size: 30))
+                .position(x: horsePosition, y: 15)
                 .padding()
+                .foregroundColor(horseColor)
         }
     }
 }
