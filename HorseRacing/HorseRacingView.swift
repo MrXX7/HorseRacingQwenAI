@@ -66,23 +66,32 @@ struct HorseRacingView: View {
         isRacing = true
         winner = nil
         
+        // Reset positions to start line
+        positions = [0, 0, 0, 0, 0]
+        
+        // Determine the winner based on who reaches the finish line first
+        let finishLine: CGFloat = 300
+        var winnerIndex: Int? = nil
+        
         for index in positions.indices {
             let randomDuration = Double.random(in: 2...5)
             withAnimation(Animation.linear(duration: randomDuration)) {
-                positions[index] = 300
+                positions[index] = finishLine
+            }
+            
+            // Track which horse finishes first
+            DispatchQueue.main.asyncAfter(deadline: .now() + randomDuration) {
+                if winnerIndex == nil { // Only set the winner if no one has won yet
+                    winnerIndex = index
+                    winner = winnerIndex
+                }
             }
         }
         
-        // Determine the winner
+        // Reset after race ends
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            let maxPosition = positions.max()
-            winner = positions.firstIndex(of: maxPosition!)
-            
-            // Reset after race ends
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                positions = [0, 0, 0, 0, 0]
-                isRacing = false
-            }
+            positions = [0, 0, 0, 0, 0]
+            isRacing = false
         }
     }
 }
