@@ -6,52 +6,57 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct HorseRacingView: View {
     @State private var positions: [CGFloat] = [0, 0, 0, 0, 0]
     @State private var isRacing = false
     @State private var winner: Int? = nil
+    @State private var audioPlayer: AVAudioPlayer?
 
     var body: some View {
         ZStack {
-            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.green.opacity(0.2)]), startPoint: .top, endPoint: .bottom)
+            // Arka plan
+            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.green.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
-                Text("Horse Racing")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                // Başlık
+                Text("🏇 Horse Racing 🏇")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                    .shadow(color: .black, radius: 2, x: 0, y: 2)
+                    .shadow(color: .black, radius: 5, x: 0, y: 2)
                 
+                // Yarış Pistleri
                 VStack(spacing: 10) {
                     ForEach(0..<5) { index in
-                        TrackView(horsePosition: $positions[index], isRacing: $isRacing, horseColor: colors[index])
+                        TrackView(horsePosition: $positions[index], isRacing: $isRacing, horseColor: colors[index], horseIcon: horseIcons[index])
                     }
                 }
                 .padding(.horizontal)
                 
+                // Kazananı Göster
                 if let winner = winner {
-                    Text("🏆 Horse \(winner + 1) wins!")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    Text("🏆 Horse \(winner + 1) wins! 🏆")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.yellow)
-                        .shadow(color: .black, radius: 2, x: 0, y: 2)
+                        .shadow(color: .black, radius: 5, x: 0, y: 2)
                         .transition(.opacity)
+                        .padding(.top, 20)
                 }
                 
+                // Başlat Butonu
                 Button(action: {
                     self.startRace()
                 }) {
                     Text(isRacing ? "Racing..." : "Start Race")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 24, weight: .semibold, design: .rounded))
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(isRacing ? Color.gray : Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .shadow(color: .black, radius: 2, x: 0, y: 2)
+                        .cornerRadius(15)
+                        .shadow(color: .black, radius: 5, x: 0, y: 5)
                 }
                 .disabled(isRacing)
                 .padding(.horizontal)
@@ -60,16 +65,23 @@ struct HorseRacingView: View {
         }
     }
     
+    // Atların renkleri
     let colors: [Color] = [.red, .green, .blue, .orange, .purple]
+    
+    // Atların ikonları
+    let horseIcons: [String] = ["🐎", "🏇", "🦄", "🐴", "🚀"]
     
     func startRace() {
         isRacing = true
         winner = nil
         
-        // Reset positions to start line
+        // Pozisyonları sıfırla
         positions = [0, 0, 0, 0, 0]
         
-        // Determine the winner based on who reaches the finish line first
+        // Ses efekti çal
+        playSound(sound: "race-start", type: "mp3")
+        
+        // Bitiş çizgisi
         let finishLine: CGFloat = 300
         var winnerIndex: Int? = nil
         
@@ -79,19 +91,32 @@ struct HorseRacingView: View {
                 positions[index] = finishLine
             }
             
-            // Track which horse finishes first
+            // Kazananı belirle
             DispatchQueue.main.asyncAfter(deadline: .now() + randomDuration) {
-                if winnerIndex == nil { // Only set the winner if no one has won yet
+                if winnerIndex == nil {
                     winnerIndex = index
                     winner = winnerIndex
+                    playSound(sound: "race-end", type: "mp3") // Kazanan sesi
                 }
             }
         }
         
-        // Reset after race ends
+        // Yarışı sıfırla
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             positions = [0, 0, 0, 0, 0]
             isRacing = false
+        }
+    }
+    
+    // Ses çalma fonksiyonu
+    func playSound(sound: String, type: String) {
+        if let path = Bundle.main.path(forResource: sound, ofType: type) {
+            do {
+                audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+                audioPlayer?.play()
+            } catch {
+                print("Ses dosyası çalınamadı.")
+            }
         }
     }
 }
@@ -100,19 +125,23 @@ struct TrackView: View {
     @Binding var horsePosition: CGFloat
     @Binding var isRacing: Bool
     var horseColor: Color
+    var horseIcon: String
 
     var body: some View {
         ZStack(alignment: .leading) {
+            // Yarış pisti
             Rectangle()
                 .frame(width: 300, height: 4)
                 .foregroundColor(.black)
                 .shadow(color: .gray, radius: 2, x: 0, y: 2)
             
-            Text("🏇🏼")
+            // At ikonu
+            Text(horseIcon)
                 .font(.system(size: 30))
                 .position(x: horsePosition, y: 15)
                 .padding()
                 .foregroundColor(horseColor)
+                .shadow(color: .black, radius: 2, x: 0, y: 2)
         }
     }
 }
