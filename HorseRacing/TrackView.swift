@@ -21,41 +21,22 @@ struct TrackView: View {
                 .foregroundColor(Color.green)
                 .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
             
-            // Racetrack with texture (dirt-like appearance)
-            RoundedRectangle(cornerRadius: 10)
-                .frame(width: 300, height: 40)
-                .foregroundColor(Color.brown.opacity(0.8))
-                .overlay(
-                    // Adding texture to the track
-                    Rectangle()
-                        .fill(
-                            AngularGradient(gradient: Gradient(colors: [.brown.opacity(0.9), .brown.opacity(0.7)]),
-                                            center: .center)
-                        )
-                        .blur(radius: 2)
-                )
-                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
-            
-            // Lane dividers (white dashed lines)
-            HStack(spacing: 10) {
-                ForEach(0..<10) { _ in
-                    Rectangle()
-                        .frame(width: 20, height: 2)
-                        .foregroundColor(.white)
-                        .opacity(0.8)
-                }
-            }
-            .offset(y: -5) // Adjust position to align with the track
+            // Racetrack (black line)
+            Rectangle()
+                .frame(width: 300, height: 4)
+                .foregroundColor(.black)
+                .shadow(color: .gray, radius: 2, x: 0, y: 2)
+                .offset(y: 15) // Center the track vertically
             
             // Horse icon
             Text(horseIcon)
                 .font(.system(size: 30))
-                .position(x: horsePosition, y: 20) // Adjusted position for better alignment
+                .position(x: horsePosition, y: 15)
                 .padding()
                 .foregroundColor(horseColor)
-                .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
-                .animation(.easeInOut(duration: 0.5), value: horsePosition) // Smooth animation for movement
+                .shadow(color: .black, radius: 2, x: 0, y: 2)
         }
         .frame(width: 340, height: 60)
     }
 }
+    
