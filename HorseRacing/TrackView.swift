@@ -35,6 +35,7 @@ struct TrackView: View {
                 .padding()
                 .foregroundColor(horseColor)
                 .shadow(color: .black, radius: 2, x: 0, y: 2)
+                .scaleEffect(x: -1, y: 1) // Yatay eksende ters çevir (sağa bakmasını sağla)
         }
         .frame(width: 340, height: 60)
     }

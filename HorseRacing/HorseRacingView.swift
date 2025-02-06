@@ -69,7 +69,7 @@ struct HorseRacingView: View {
     let colors: [Color] = [.red, .green, .blue, .orange, .purple]
     
     // Atların ikonları
-    let horseIcons: [String] = ["🐎", "🏇", "🦄", "🐴", "🚀"]
+    let horseIcons: [String] = ["🏇", "🏇", "🏇", "🏇", "🏇"]
     
     func startRace() {
         isRacing = true
