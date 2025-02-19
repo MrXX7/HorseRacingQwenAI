@@ -34,19 +34,41 @@ struct HorseRacingView: View {
                 
                 // Yarış Pisti
                 ZStack {
-                    // Pist arka planı
+                    // Çim pist arka planı
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.brown.opacity(0.3))
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.green.opacity(0.7),
+                                Color.green.opacity(0.8)
+                            ]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
                         .frame(height: 200)
                         .overlay(
                             // Pist çizgileri
                             VStack(spacing: horseSpacing) {
                                 ForEach(0..<6) { _ in
                                     Rectangle()
-                                        .fill(Color.white.opacity(0.5))
+                                        .fill(Color.white.opacity(0.3))
                                         .frame(height: 1)
                                 }
                             }
+                        )
+                        .overlay(
+                            // Çim dokusu efekti
+                            Rectangle()
+                                .fill(Color.green.opacity(0.2))
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.green.opacity(0.1),
+                                            Color.green.opacity(0.3)
+                                        ]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
                         )
                     
                     // Bitiş çizgisi
@@ -140,9 +162,6 @@ struct HorseRacingView: View {
         }
     }
 }
-
-
-
 struct HorseRacingView_Previews: PreviewProvider {
     static var previews: some View {
         HorseRacingView()
