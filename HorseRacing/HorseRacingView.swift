@@ -13,11 +13,16 @@ struct HorseRacingView: View {
     @State private var isRacing = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
-
+    
+    let trackWidth: CGFloat = UIScreen.main.bounds.width - 40
+    let horseSpacing: CGFloat = 10
+    
     var body: some View {
         ZStack {
             // Arka plan
-            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.green.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
+            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.green.opacity(0.3)]),
+                          startPoint: .top,
+                          endPoint: .bottom)
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
@@ -27,10 +32,36 @@ struct HorseRacingView: View {
                     .foregroundColor(.white)
                     .shadow(color: .black, radius: 5, x: 0, y: 2)
                 
-                // Yarış Pistleri
-                VStack(spacing: 10) {
+                // Yarış Pisti
+                ZStack {
+                    // Pist arka planı
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.brown.opacity(0.3))
+                        .frame(height: 200)
+                        .overlay(
+                            // Pist çizgileri
+                            VStack(spacing: horseSpacing) {
+                                ForEach(0..<6) { _ in
+                                    Rectangle()
+                                        .fill(Color.white.opacity(0.5))
+                                        .frame(height: 1)
+                                }
+                            }
+                        )
+                    
+                    // Bitiş çizgisi
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 4)
+                        .offset(x: trackWidth/2 - 20)
+                    
+                    // Atlar
                     ForEach(0..<5) { index in
-                        TrackView(horsePosition: $positions[index], isRacing: $isRacing, horseColor: colors[index], horseIcon: horseIcons[index])
+                        Text(horseIcons[index])
+                            .font(.system(size: 30))
+                            .offset(x: positions[index] - trackWidth/2,
+                                    y: CGFloat(index * 35) - 80)
+                            .animation(.linear(duration: Double.random(in: 2...5)), value: positions[index])
                     }
                 }
                 .padding(.horizontal)
@@ -65,24 +96,16 @@ struct HorseRacingView: View {
         }
     }
     
-    // Atların renkleri
-    let colors: [Color] = [.red, .green, .blue, .orange, .purple]
-    
-    // Atların ikonları
     let horseIcons: [String] = ["🏇", "🏇", "🏇", "🏇", "🏇"]
     
     func startRace() {
         isRacing = true
         winner = nil
-        
-        // Pozisyonları sıfırla
         positions = [0, 0, 0, 0, 0]
         
-        // Ses efekti çal
         playSound(sound: "race-start", type: "mp3")
         
-        // Bitiş çizgisi
-        let finishLine: CGFloat = 300
+        let finishLine: CGFloat = trackWidth - 40
         var winnerIndex: Int? = nil
         
         for index in positions.indices {
@@ -91,24 +114,21 @@ struct HorseRacingView: View {
                 positions[index] = finishLine
             }
             
-            // Kazananı belirle
             DispatchQueue.main.asyncAfter(deadline: .now() + randomDuration) {
                 if winnerIndex == nil {
                     winnerIndex = index
                     winner = winnerIndex
-                    playSound(sound: "race-end", type: "mp3") // Kazanan sesi
+                    playSound(sound: "race-end", type: "mp3")
                 }
             }
         }
         
-        // Yarışı sıfırla
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             positions = [0, 0, 0, 0, 0]
             isRacing = false
         }
     }
     
-    // Ses çalma fonksiyonu
     func playSound(sound: String, type: String) {
         if let path = Bundle.main.path(forResource: sound, ofType: type) {
             do {
@@ -120,7 +140,6 @@ struct HorseRacingView: View {
         }
     }
 }
-
 
 
 
