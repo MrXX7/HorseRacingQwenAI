@@ -16,8 +16,8 @@ struct HorseRacingView: View {
     @State private var raceFinished = false
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width - 40
-    let horseSpacing: CGFloat = 10
-    let horseSize: CGFloat = 30 // Size for the horse image
+    let horseSpacing: CGFloat = 20 // Increased spacing for larger horses
+    let horseSize: CGFloat = 60 // Doubled from 30 to 60
     
     var body: some View {
         ZStack {
@@ -29,18 +29,10 @@ struct HorseRacingView: View {
             VStack(spacing: 20) {
                 // Title
                 HStack {
-                    Image("a")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: horseSize, height: horseSize)
                     Text("Horse Racing")
                         .font(.system(size: 40, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .shadow(color: .black, radius: 5, x: 0, y: 2)
-                    Image("a")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: horseSize, height: horseSize)
                 }
                 
                 // Race Track
@@ -55,7 +47,7 @@ struct HorseRacingView: View {
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
-                        .frame(height: 320)
+                        .frame(height: 400) // Increased height for larger horses
                         .overlay(
                             VStack(spacing: horseSpacing) {
                                 ForEach(0..<9) { _ in
@@ -93,7 +85,7 @@ struct HorseRacingView: View {
                             .scaledToFit()
                             .frame(width: horseSize, height: horseSize)
                             .offset(x: positions[index] - trackWidth/2,
-                                   y: CGFloat(index * 35) - 140)
+                                   y: CGFloat(index * 45) - 170) // Adjusted spacing and starting position
                     }
                 }
                 .padding(.horizontal)
@@ -128,7 +120,7 @@ struct HorseRacingView: View {
         }
     }
     
-    // Rest of the functions remain the same
+    // Rest of the code remains the same
     func startRace() {
         isRacing = true
         winner = nil
