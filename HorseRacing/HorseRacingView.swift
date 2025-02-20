@@ -9,7 +9,7 @@ import SwiftUI
 import AVFoundation
 
 struct HorseRacingView: View {
-    @State private var positions: [CGFloat] = Array(repeating: 0, count: 8) // 8 at için pozisyonlar
+    @State private var positions: [CGFloat] = Array(repeating: 0, count: 8)
     @State private var isRacing = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
@@ -17,32 +17,35 @@ struct HorseRacingView: View {
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width - 40
     let horseSpacing: CGFloat = 10
-    let horseEmoji = "🐎"
+    let horseSize: CGFloat = 30 // Size for the horse image
     
     var body: some View {
         ZStack {
-            // Arka plan
             LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.green.opacity(0.3)]),
                           startPoint: .top,
                           endPoint: .bottom)
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
-                // Başlık
+                // Title
                 HStack {
-                    Text(horseEmoji)
-                        .font(.system(size: 30))
+                    Image("a")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: horseSize, height: horseSize)
                     Text("Horse Racing")
                         .font(.system(size: 40, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .shadow(color: .black, radius: 5, x: 0, y: 2)
-                    Text(horseEmoji)
-                        .font(.system(size: 30))
+                    Image("a")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: horseSize, height: horseSize)
                 }
                 
-                // Yarış Pisti
+                // Race Track
                 ZStack {
-                    // Çim pist arka planı
+                    // Track background
                     RoundedRectangle(cornerRadius: 15)
                         .fill(LinearGradient(
                             gradient: Gradient(colors: [
@@ -52,11 +55,10 @@ struct HorseRacingView: View {
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
-                        .frame(height: 320) // Yüksekliği arttırdık
+                        .frame(height: 320)
                         .overlay(
-                            // Pist çizgileri
                             VStack(spacing: horseSpacing) {
-                                ForEach(0..<9) { _ in // Bir fazla çizgi
+                                ForEach(0..<9) { _ in
                                     Rectangle()
                                         .fill(Color.white.opacity(0.3))
                                         .frame(height: 1)
@@ -64,7 +66,6 @@ struct HorseRacingView: View {
                             }
                         )
                         .overlay(
-                            // Çim dokusu efekti
                             Rectangle()
                                 .fill(Color.green.opacity(0.2))
                                 .background(
@@ -79,23 +80,25 @@ struct HorseRacingView: View {
                                 )
                         )
                     
-                    // Bitiş çizgisi
+                    // Finish line
                     Rectangle()
                         .fill(Color.white)
                         .frame(width: 4)
                         .offset(x: trackWidth/2 - 20)
                     
-                    // Atlar
+                    // Horses
                     ForEach(0..<8) { index in
-                        Text(horseEmoji)
-                            .font(.system(size: 30))
+                        Image("a")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: horseSize, height: horseSize)
                             .offset(x: positions[index] - trackWidth/2,
-                                    y: CGFloat(index * 35) - 140) // Y pozisyonunu ayarladık
+                                   y: CGFloat(index * 35) - 140)
                     }
                 }
                 .padding(.horizontal)
                 
-                // Kazananı Göster
+                // Show Winner
                 if raceFinished, let winner = winner {
                     Text("🏆 Horse \(winner + 1) wins! 🏆")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -105,7 +108,7 @@ struct HorseRacingView: View {
                         .padding(.top, 20)
                 }
                 
-                // Başlat Butonu
+                // Start Button
                 Button(action: {
                     self.startRace()
                 }) {
@@ -125,26 +128,24 @@ struct HorseRacingView: View {
         }
     }
     
+    // Rest of the functions remain the same
     func startRace() {
         isRacing = true
         winner = nil
         raceFinished = false
-        positions = Array(repeating: 0, count: 8) // 8 at için sıfırlama
+        positions = Array(repeating: 0, count: 8)
         
         playSound(sound: "race-start", type: "mp3")
         
         let finishLine: CGFloat = trackWidth - 40
-        var finishedHorses: [Int] = []
-        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 2...5) } // 8 at için süre
+        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 2...5) }
         
-        // Her at için animasyon başlat
         for index in positions.indices {
             withAnimation(Animation.linear(duration: raceDurations[index])) {
                 positions[index] = finishLine
             }
         }
         
-        // Kazananı belirle
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
             if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
                 winner = winningIndex
@@ -153,10 +154,9 @@ struct HorseRacingView: View {
             }
         }
         
-        // Yarışı sıfırla
         let maxDuration = raceDurations.max() ?? 5
         DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration + 2) {
-            positions = Array(repeating: 0, count: 8) // 8 at için sıfırlama
+            positions = Array(repeating: 0, count: 8)
             isRacing = false
         }
     }
