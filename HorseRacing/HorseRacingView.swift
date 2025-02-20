@@ -9,13 +9,15 @@ import SwiftUI
 import AVFoundation
 
 struct HorseRacingView: View {
-    @State private var positions: [CGFloat] = [0, 0, 0, 0, 0]
+    @State private var positions: [CGFloat] = Array(repeating: 0, count: 8) // 8 at için pozisyonlar
     @State private var isRacing = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
+    @State private var raceFinished = false
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width - 40
     let horseSpacing: CGFloat = 10
+    let horseEmoji = "🐎"
     
     var body: some View {
         ZStack {
@@ -27,10 +29,16 @@ struct HorseRacingView: View {
             
             VStack(spacing: 20) {
                 // Başlık
-                Text("🏇 Horse Racing 🏇")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: .black, radius: 5, x: 0, y: 2)
+                HStack {
+                    Text(horseEmoji)
+                        .font(.system(size: 30))
+                    Text("Horse Racing")
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .black, radius: 5, x: 0, y: 2)
+                    Text(horseEmoji)
+                        .font(.system(size: 30))
+                }
                 
                 // Yarış Pisti
                 ZStack {
@@ -44,11 +52,11 @@ struct HorseRacingView: View {
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
-                        .frame(height: 200)
+                        .frame(height: 320) // Yüksekliği arttırdık
                         .overlay(
                             // Pist çizgileri
                             VStack(spacing: horseSpacing) {
-                                ForEach(0..<6) { _ in
+                                ForEach(0..<9) { _ in // Bir fazla çizgi
                                     Rectangle()
                                         .fill(Color.white.opacity(0.3))
                                         .frame(height: 1)
@@ -78,18 +86,17 @@ struct HorseRacingView: View {
                         .offset(x: trackWidth/2 - 20)
                     
                     // Atlar
-                    ForEach(0..<5) { index in
-                        Text(horseIcons[index])
+                    ForEach(0..<8) { index in
+                        Text(horseEmoji)
                             .font(.system(size: 30))
                             .offset(x: positions[index] - trackWidth/2,
-                                    y: CGFloat(index * 35) - 80)
-                            .animation(.linear(duration: Double.random(in: 2...5)), value: positions[index])
+                                    y: CGFloat(index * 35) - 140) // Y pozisyonunu ayarladık
                     }
                 }
                 .padding(.horizontal)
                 
                 // Kazananı Göster
-                if let winner = winner {
+                if raceFinished, let winner = winner {
                     Text("🏆 Horse \(winner + 1) wins! 🏆")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.yellow)
@@ -118,35 +125,38 @@ struct HorseRacingView: View {
         }
     }
     
-    let horseIcons: [String] = ["🏇", "🏇", "🏇", "🏇", "🏇"]
-    
     func startRace() {
         isRacing = true
         winner = nil
-        positions = [0, 0, 0, 0, 0]
+        raceFinished = false
+        positions = Array(repeating: 0, count: 8) // 8 at için sıfırlama
         
         playSound(sound: "race-start", type: "mp3")
         
         let finishLine: CGFloat = trackWidth - 40
-        var winnerIndex: Int? = nil
+        var finishedHorses: [Int] = []
+        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 2...5) } // 8 at için süre
         
+        // Her at için animasyon başlat
         for index in positions.indices {
-            let randomDuration = Double.random(in: 2...5)
-            withAnimation(Animation.linear(duration: randomDuration)) {
+            withAnimation(Animation.linear(duration: raceDurations[index])) {
                 positions[index] = finishLine
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + randomDuration) {
-                if winnerIndex == nil {
-                    winnerIndex = index
-                    winner = winnerIndex
-                    playSound(sound: "race-end", type: "mp3")
-                }
             }
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            positions = [0, 0, 0, 0, 0]
+        // Kazananı belirle
+        DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
+            if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
+                winner = winningIndex
+                raceFinished = true
+                playSound(sound: "race-end", type: "mp3")
+            }
+        }
+        
+        // Yarışı sıfırla
+        let maxDuration = raceDurations.max() ?? 5
+        DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration + 2) {
+            positions = Array(repeating: 0, count: 8) // 8 at için sıfırlama
             isRacing = false
         }
     }
@@ -162,6 +172,7 @@ struct HorseRacingView: View {
         }
     }
 }
+
 struct HorseRacingView_Previews: PreviewProvider {
     static var previews: some View {
         HorseRacingView()
