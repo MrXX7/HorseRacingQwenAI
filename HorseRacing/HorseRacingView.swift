@@ -115,23 +115,25 @@ struct HorseRacingView: View {
     func startRace() {
         guard !isRacing else { return }
         
-        scrollOffset = 0
         isRacing = true
         winner = nil
         raceFinished = false
-        positions = Array(repeating: 0, count: 8)
-        
-        playSound(sound: "race-start", type: "mp3")
+        positions = Array(repeating: 0, count: 8) // Reset positions
         
         let finishLine: CGFloat = trackWidth - horseSize - 40
+        
+        // Random race durations (15-20 seconds)
         var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
         
+        // Animate horses
         for index in positions.indices {
             withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) {
                 positions[index] = finishLine
             }
         }
         
+        // Determine winner
+    
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
             if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
                 winner = winningIndex
@@ -156,16 +158,16 @@ struct HorseRacingView: View {
         }
     }
     
-    func playSound(sound: String, type: String) {
-        if let path = Bundle.main.path(forResource: sound, ofType: type) {
-            do {
-                audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
-                audioPlayer?.play()
-            } catch {
-                print("Failed to play sound")
-            }
+func playSound(sound: String, type: String) {
+    if let path = Bundle.main.path(forResource: sound, ofType: type) {
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+            audioPlayer?.play()
+        } catch {
+            print("Failed to play sound")
         }
     }
+}
 }
 
 struct HorseRacingView_Previews: PreviewProvider {
