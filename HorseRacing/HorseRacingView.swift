@@ -24,7 +24,7 @@ struct HorseRacingView: View {
         "Lightning Strike", "Desert King"
     ]
     
-    let trackWidth: CGFloat = UIScreen.main.bounds.width - 40
+    let trackWidth: CGFloat = UIScreen.main.bounds.width * 1.5
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
     
@@ -70,58 +70,59 @@ struct HorseRacingView: View {
                 .cornerRadius(15)
                 
                 // Yarış Pisti
-                ZStack {
-                    // Geliştirilmiş Pist Arkaplanı
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color(hex: "8B4513").opacity(0.3),
-                                Color(hex: "8B4513").opacity(0.4)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .frame(height: 400)
-                        .overlay(
-                            VStack(spacing: horseSpacing) {
-                                ForEach(0..<9) { _ in
-                                    Rectangle()
-                                        .fill(Color.white.opacity(0.3))
-                                        .frame(height: 1)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    ZStack {
+                        // Geliştirilmiş Pist Arkaplanı
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(hex: "8B4513").opacity(0.3),
+                                    Color(hex: "8B4513").opacity(0.4)
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .frame(width: trackWidth, height: 400)
+                            .overlay(
+                                VStack(spacing: horseSpacing) {
+                                    ForEach(0..<9) { _ in
+                                        Rectangle()
+                                            .fill(Color.white.opacity(0.3))
+                                            .frame(height: 1)
+                                    }
                                 }
+                            )
+                        
+                        // Bitiş Çizgisi
+                        HStack(spacing: 5) {
+                            ForEach(0..<4) { i in
+                                Rectangle()
+                                    .fill(i % 2 == 0 ? Color.black : Color.white)
+                                    .frame(width: 10, height: 400)
                             }
-                        )
-                    
-                    // Bitiş Çizgisi
-                    HStack(spacing: 5) {
-                        ForEach(0..<4) { i in
-                            Rectangle()
-                                .fill(i % 2 == 0 ? Color.black : Color.white)
-                                .frame(width: 10, height: 400)
                         }
-                    }
-                    .offset(x: trackWidth/2 - 20)
-                    
-                    // Atlar ve İsimleri
-                    ForEach(0..<8) { index in
-                        HStack {
-                            Text(horseNames[index])
-                                .font(.system(size: 12, design: .rounded))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 5)
-                                .background(Color.black.opacity(0.5))
-                                .cornerRadius(5)
-                            
-                            // "a" asset'ini geri ekliyoruz
-                            Image("a")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: horseSize, height: horseSize)
-                                .rotation3DEffect(.degrees(isRacing ? 10 : 0), axis: (x: 0, y: 1, z: 0))
-                                .shadow(color: .black.opacity(0.3), radius: 3)
+                        .offset(x: trackWidth/2 - horseSize - 20)
+                        
+                        // Atlar ve İsimleri
+                        ForEach(0..<8) { index in
+                            HStack {
+                                Text(horseNames[index])
+                                    .font(.system(size: 12, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 5)
+                                    .background(Color.black.opacity(0.5))
+                                    .cornerRadius(5)
+                                
+                                Image("a")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: horseSize, height: horseSize)
+                                    .rotation3DEffect(.degrees(isRacing ? 10 : 0), axis: (x: 0, y: 1, z: 0))
+                                    .shadow(color: .black.opacity(0.3), radius: 3)
+                            }
+                            .offset(x: positions[index] - trackWidth/2,
+                                   y: CGFloat(index * 45) - 156)
                         }
-                        .offset(x: positions[index] - trackWidth/2,
-                               y: CGFloat(index * 45) - 156)
                     }
                 }
                 .padding(.horizontal)
@@ -202,13 +203,14 @@ struct HorseRacingView: View {
         
         playSound(sound: "race-start", type: "mp3")
         
-        let finishLine: CGFloat = trackWidth - 40
-        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 2...5) }
+        let finishLine: CGFloat = trackWidth - horseSize - 40
+        
+        // Yarış sürelerini 15-20 saniye arasına ayarlıyoruz
+        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
         
         // Animasyonlar
         for index in positions.indices {
-            withAnimation(Animation.linear(duration: raceDurations[index])
-                .repeatCount(1, autoreverses: false)) {
+            withAnimation(Animation.linear(duration: raceDurations[index])) {
                 positions[index] = finishLine
             }
         }
@@ -231,7 +233,7 @@ struct HorseRacingView: View {
         }
         
         // Yarışı Sıfırlama
-        let maxDuration = raceDurations.max() ?? 5
+        let maxDuration = raceDurations.max() ?? 20
         DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration + 2) {
             withAnimation {
                 positions = Array(repeating: 0, count: 8)
@@ -267,7 +269,7 @@ struct BettingView: View {
                 Section(header: Text("Select Horse")) {
                     ForEach(horseNames.indices, id: \.self) { index in
                         HStack {
-                            Image("horse\(index + 1)")
+                            Image("a")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 40, height: 40)
