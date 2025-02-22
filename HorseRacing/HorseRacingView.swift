@@ -112,7 +112,8 @@ struct HorseRacingView: View {
                                 .background(Color.black.opacity(0.5))
                                 .cornerRadius(5)
                             
-                            Image("horse\(index + 1)")
+                            // "a" asset'ini geri ekliyoruz
+                            Image("a")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: horseSize, height: horseSize)
