@@ -23,6 +23,7 @@ struct HorseRacingView: View {
         "Night Rider", "Wind Runner", "Storm Chaser",
         "Lightning Strike", "Desert King"
     ]
+    @State private var startingPositions: [CGFloat] = Array(repeating: 0, count: 8)
     
     @State private var scrollOffset: CGFloat = 0
     
@@ -118,39 +119,33 @@ struct HorseRacingView: View {
         isRacing = true
         winner = nil
         raceFinished = false
-        positions = Array(repeating: 0, count: 8) // Reset positions
+        
+        // Store the current positions as starting positions
+        startingPositions = positions
         
         let finishLine: CGFloat = trackWidth - horseSize - 40
         
         // Random race durations (15-20 seconds)
         var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
         
-        // Animate horses
+        // Animate horses from their current positions to the finish line
         for index in positions.indices {
+            let distanceToFinish = finishLine - startingPositions[index]
             withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) {
-                positions[index] = finishLine
+                positions[index] += distanceToFinish
             }
         }
         
         // Determine winner
-    
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
             if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
                 winner = winningIndex
                 raceFinished = true
-                playSound(sound: "race-end", type: "mp3")
-                
-                if let selectedHorse = selectedHorse {
-                    if selectedHorse == winningIndex {
-                        coins += betAmount * 2
-                        playSound(sound: "win", type: "mp3")
-                    }
-                }
             }
         }
         
-        let maxDuration = raceDurations.max() ?? 20
-        DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration + 2) {
+        // Reset after race
+        DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.max()! + 2) {
             withAnimation {
                 positions = Array(repeating: 0, count: 8)
                 isRacing = false
