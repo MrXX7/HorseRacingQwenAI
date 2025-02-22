@@ -24,6 +24,8 @@ struct HorseRacingView: View {
         "Lightning Strike", "Desert King"
     ]
     
+    @State private var scrollOffset: CGFloat = 0
+    
     let trackWidth: CGFloat = UIScreen.main.bounds.width * 1.5
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
@@ -70,6 +72,7 @@ struct HorseRacingView: View {
                 .cornerRadius(15)
                 
                 // Yarış Pisti
+                ScrollViewReader { scrollProxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack {
                         // Geliştirilmiş Pist Arkaplanı
@@ -105,27 +108,46 @@ struct HorseRacingView: View {
                         
                         // Atlar ve İsimleri
                         ForEach(0..<8) { index in
-                            HStack {
-                                Text(horseNames[index])
-                                    .font(.system(size: 12, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 5)
-                                    .background(Color.black.opacity(0.5))
-                                    .cornerRadius(5)
-                                
-                                Image("a")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: horseSize, height: horseSize)
-                                    .rotation3DEffect(.degrees(isRacing ? 10 : 0), axis: (x: 0, y: 1, z: 0))
-                                    .shadow(color: .black.opacity(0.3), radius: 3)
-                            }
-                            .offset(x: positions[index] - trackWidth/2,
-                                   y: CGFloat(index * 45) - 156)
-                        }
+                                                        ZStack {
+                                                            // Önce at görseli
+                                                            Image("a")
+                                                                .resizable()
+                                                                .scaledToFit()
+                                                                .frame(width: horseSize, height: horseSize)
+                                                                .rotation3DEffect(.degrees(isRacing ? 10 : 0), axis: (x: 0, y: 1, z: 0))
+                                                                .shadow(color: .black.opacity(0.3), radius: 3)
+                                                            
+                                                            // At ismi üstte
+                                                            Text(horseNames[index])
+                                                                .font(.system(size: 12, design: .rounded))
+                                                                .foregroundColor(.white)
+                                                                .padding(.horizontal, 5)
+                                                                .background(Color.black.opacity(0.5))
+                                                                .cornerRadius(5)
+                                                                .offset(y: -35) // İsmi yukarı taşıyoruz
+                                                        }
+                                                        .offset(x: positions[index] - trackWidth/2,
+                                                               y: CGFloat(index * 45) - 156)
+                                                        .id("horse\(index)") // ScrollViewReader için ID
+                                                    }
                     }
                 }
                 .padding(.horizontal)
+                .frame(width: trackWidth)
+                .onChange(of: positions) { newPositions in
+                                        if isRacing {
+                                            // En öndeki atı bul
+                                            if let maxPosition = newPositions.max() {
+                                                // Scroll pozisyonunu güncelle
+                                                withAnimation {
+                                                    scrollProxy.scrollTo("horse0", anchor: .center)
+                                                    scrollOffset = maxPosition
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
                 
                 // Kazanan Göstergesi
                 if raceFinished, let winner = winner {
@@ -193,27 +215,30 @@ struct HorseRacingView: View {
         }
     }
     
-    func startRace() {
-        guard !isRacing else { return }
-        
-        isRacing = true
-        winner = nil
-        raceFinished = false
-        positions = Array(repeating: 0, count: 8)
-        
-        playSound(sound: "race-start", type: "mp3")
-        
-        let finishLine: CGFloat = trackWidth - horseSize - 40
-        
-        // Yarış sürelerini 15-20 saniye arasına ayarlıyoruz
-        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
-        
-        // Animasyonlar
-        for index in positions.indices {
-            withAnimation(Animation.linear(duration: raceDurations[index])) {
-                positions[index] = finishLine
-            }
-        }
+        func startRace() {
+                guard !isRacing else { return }
+                
+                // Yarış başlamadan önce scroll'u başa al
+                scrollOffset = 0
+                
+                isRacing = true
+                winner = nil
+                raceFinished = false
+                positions = Array(repeating: 0, count: 8)
+                
+                playSound(sound: "race-start", type: "mp3")
+                
+                let finishLine: CGFloat = trackWidth - horseSize - 40
+                
+                // Yarış sürelerini 15-20 saniye arasına ayarlıyoruz
+                var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
+                
+                // Animasyonlar
+                for index in positions.indices {
+                    withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) { // Küçük bir delay ekledik
+                        positions[index] = finishLine
+                    }
+                }
         
         // Kazananı Belirleme
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
