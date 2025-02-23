@@ -8,6 +8,7 @@
 import SwiftUI
 import AVFAudio
 
+// Renk hex değeri için extension
 struct HorseRacingView: View {
     @State private var positions: [CGFloat] = Array(repeating: 0, count: 8)
     @State private var isRacing = false
@@ -24,7 +25,6 @@ struct HorseRacingView: View {
         "Lightning Strike", "Desert King"
     ]
     @State private var startingPositions: [CGFloat] = Array(repeating: 0, count: 8)
-    
     @State private var scrollOffset: CGFloat = 0
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width * 1.5
@@ -33,14 +33,14 @@ struct HorseRacingView: View {
     
     var body: some View {
         ZStack {
-            // Zenginleştirilmiş Arkaplan
+            // Arkaplan
             LinearGradient(gradient: Gradient(colors: [
                 Color(hex: "87CEEB"),
                 Color(hex: "90EE90")
             ]), startPoint: .top, endPoint: .bottom)
             .edgesIgnoringSafeArea(.all)
             
-            // Dekoratif Bulutlar
+            // Bulutlar
             ForEach(0..<5) { i in
                 Image(systemName: "cloud.fill")
                     .foregroundColor(.white.opacity(0.7))
@@ -48,7 +48,7 @@ struct HorseRacingView: View {
             }
             
             VStack(spacing: 20) {
-                // Geliştirilmiş Başlık
+                // Başlık
                 HStack {
                     Image(systemName: "flag.fill")
                         .foregroundColor(.yellow)
@@ -75,15 +75,20 @@ struct HorseRacingView: View {
                 // Yarış Pisti
                 ScrollViewReader { scrollProxy in
                     ScrollView(.horizontal, showsIndicators: false) {
-                        TrackView(positions: $positions, isRacing: $isRacing, horseNames: horseNames, trackWidth: trackWidth, horseSpacing: horseSpacing, horseSize: horseSize)
+                        TrackView(positions: $positions,
+                                isRacing: $isRacing,
+                                horseNames: horseNames,
+                                trackWidth: trackWidth,
+                                horseSpacing: horseSpacing,
+                                horseSize: horseSize)
                     }
                     .onChange(of: positions) { newPositions in
                         if isRacing {
-                            if let maxPosition = newPositions.max() {
-                                withAnimation {
-                                    scrollProxy.scrollTo("horse0", anchor: .center)
-                                    scrollOffset = maxPosition
-                                }
+                            let leadingHorsePosition = newPositions.max() ?? 0
+                            let scrollPosition = max(0, leadingHorsePosition - UIScreen.main.bounds.width / 2)
+                            withAnimation {
+                                scrollProxy.scrollTo("horse0", anchor: .leading)
+                                scrollOffset = scrollPosition
                             }
                         }
                     }
@@ -92,43 +97,48 @@ struct HorseRacingView: View {
                 
                 // Kazanan Göstergesi
                 if raceFinished, let winner = winner {
-                    WinnerView(horseNames: horseNames, winner: winner, selectedHorse: selectedHorse, betAmount: betAmount)
+                    WinnerView(horseNames: horseNames,
+                             winner: winner,
+                             selectedHorse: selectedHorse,
+                             betAmount: betAmount)
                 }
                 
                 // Kontrol Butonları
-                ControlButtonsView(isRacing: $isRacing, showBettingView: $showBettingView, startRace: startRace)
+                ControlButtonsView(isRacing: $isRacing,
+                                 showBettingView: $showBettingView,
+                                 startRace: startRace)
             }
             .padding(.vertical)
-            
-            // Bahis Sheet'i
-            .sheet(isPresented: $showBettingView) {
-                BettingView(
-                    horseNames: horseNames,
-                    selectedHorse: $selectedHorse,
-                    betAmount: $betAmount,
-                    coins: $coins,
-                    isPresented: $showBettingView
-                )
-            }
+        }
+        .sheet(isPresented: $showBettingView) {
+            BettingView(
+                horseNames: horseNames,
+                selectedHorse: $selectedHorse,
+                betAmount: $betAmount,
+                coins: $coins,
+                isPresented: $showBettingView
+            )
         }
     }
     
     func startRace() {
         guard !isRacing else { return }
         
+        // Bahis kontrolü
+        if let selectedHorse = selectedHorse {
+            guard coins >= betAmount else { return }
+            coins -= betAmount
+        }
+        
         isRacing = true
         winner = nil
         raceFinished = false
-        
-        // Store the current positions as starting positions
         startingPositions = positions
         
         let finishLine: CGFloat = trackWidth - horseSize - 40
-        
-        // Random race durations (15-20 seconds)
         var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
         
-        // Animate horses from their current positions to the finish line
+        // Atları animasyonla hareket ettir
         for index in positions.indices {
             let distanceToFinish = finishLine - startingPositions[index]
             withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) {
@@ -136,33 +146,45 @@ struct HorseRacingView: View {
             }
         }
         
-        // Determine winner
+        // Kazananı belirle
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
             if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
                 winner = winningIndex
                 raceFinished = true
+                
+                // Bahis sonuçlarını işle
+                if let selected = selectedHorse {
+                    if selected == winningIndex {
+                        coins += betAmount * 2
+                        playSound(sound: "win", type: "mp3")
+                    } else {
+                        playSound(sound: "lose", type: "mp3")
+                    }
+                }
             }
         }
         
-        // Reset after race
+        // Yarışı sıfırla
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.max()! + 2) {
             withAnimation {
                 positions = Array(repeating: 0, count: 8)
                 isRacing = false
+                selectedHorse = nil
+                betAmount = 0
             }
         }
     }
     
-func playSound(sound: String, type: String) {
-    if let path = Bundle.main.path(forResource: sound, ofType: type) {
-        do {
-            audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
-            audioPlayer?.play()
-        } catch {
-            print("Failed to play sound")
+    func playSound(sound: String, type: String) {
+        if let path = Bundle.main.path(forResource: sound, ofType: type) {
+            do {
+                audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+                audioPlayer?.play()
+            } catch {
+                print("Failed to play sound")
+            }
         }
     }
-}
 }
 
 struct HorseRacingView_Previews: PreviewProvider {
