@@ -12,37 +12,52 @@ struct ControlButtonsView: View {
     @Binding var showBettingView: Bool
     var startRace: () -> Void
     
-    
     var body: some View {
         HStack(spacing: 20) {
-            Button(action: { showBettingView = true }) {
-                HStack {
-                    Image(systemName: "dollarsign.circle.fill")
-                    Text("Place Bet")
-                }
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(15)
-            }
-            .disabled(isRacing)
+            CustomButton(
+                action: { showBettingView = true },
+                label: {
+                    HStack {
+                        Image(systemName: "dollarsign.circle.fill")
+                        Text("Place Bet")
+                    }
+                },
+                backgroundColor: .green,
+                isDisabled: isRacing
+            )
             
-            Button(action: { startRace() }) {
-                HStack {
-                    Image(systemName: isRacing ? "flag.fill" : "flag")
-                    Text(isRacing ? "Racing..." : "Start Race")
-                }
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(isRacing ? Color.gray : Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(15)
-            }
-            .disabled(isRacing)
+            CustomButton(
+                action: { startRace() },
+                label: {
+                    HStack {
+                        Image(systemName: isRacing ? "flag.fill" : "flag")
+                        Text(isRacing ? "Racing..." : "Start Race")
+                    }
+                },
+                backgroundColor: isRacing ? .gray : .blue,
+                isDisabled: isRacing
+            )
         }
         .padding(.horizontal)
+    }
+}
+
+struct CustomButton<Label: View>: View {
+    var action: () -> Void
+    var label: () -> Label
+    var backgroundColor: Color
+    var isDisabled: Bool
+    
+    var body: some View {
+        Button(action: action) {
+            label()
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(backgroundColor)
+                .foregroundColor(.white)
+                .cornerRadius(15)
+        }
+        .disabled(isDisabled)
     }
 }
