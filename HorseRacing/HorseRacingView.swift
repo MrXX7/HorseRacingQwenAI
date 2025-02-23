@@ -130,41 +130,64 @@ struct HorseRacingView: View {
             coins -= betAmount
         }
         
+        startRaceSetup()
+        
+        let finishLine = calculateFinishLine()
+        let raceDurations = generateRaceDurations()
+        
+        animateHorsesToFinishLine(finishLine: finishLine, raceDurations: raceDurations)
+        
+        determineWinner(raceDurations: raceDurations)
+        
+        resetRaceAfterCompletion(raceDurations: raceDurations)
+    }
+
+    private func startRaceSetup() {
         isRacing = true
         winner = nil
         raceFinished = false
         startingPositions = positions
-        
-        let finishLine: CGFloat = trackWidth - horseSize - 40
-        var raceDurations: [Double] = (0..<8).map { _ in Double.random(in: 15...20) }
-        
-        // Atları animasyonla hareket ettir
+    }
+
+    private func calculateFinishLine() -> CGFloat {
+        return trackWidth - horseSize - 40
+    }
+
+    private func generateRaceDurations() -> [Double] {
+        return (0..<8).map { _ in Double.random(in: 15...20) }
+    }
+
+    private func animateHorsesToFinishLine(finishLine: CGFloat, raceDurations: [Double]) {
         for index in positions.indices {
             let distanceToFinish = finishLine - startingPositions[index]
             withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) {
                 positions[index] += distanceToFinish
             }
         }
-        
-        // Kazananı belirle
+    }
+
+    private func determineWinner(raceDurations: [Double]) {
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
             if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
                 winner = winningIndex
                 raceFinished = true
-                
-                // Bahis sonuçlarını işle
-                if let selected = selectedHorse {
-                    if selected == winningIndex {
-                        coins += betAmount * 2
-                        playSound(sound: "win", type: "mp3")
-                    } else {
-                        playSound(sound: "lose", type: "mp3")
-                    }
-                }
+                processBetResult(winningIndex: winningIndex)
             }
         }
-        
-        // Yarışı sıfırla
+    }
+
+    private func processBetResult(winningIndex: Int) {
+        if let selectedHorse = selectedHorse {
+            if selectedHorse == winningIndex {
+                coins += betAmount * 2
+                playSound(sound: "win", type: "mp3")
+            } else {
+                playSound(sound: "lose", type: "mp3")
+            }
+        }
+    }
+
+    private func resetRaceAfterCompletion(raceDurations: [Double]) {
         DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.max()! + 2) {
             withAnimation {
                 positions = Array(repeating: 0, count: 8)

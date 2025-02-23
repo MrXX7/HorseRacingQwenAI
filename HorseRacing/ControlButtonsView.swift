@@ -12,6 +12,7 @@ struct ControlButtonsView: View {
     @Binding var showBettingView: Bool
     var startRace: () -> Void
     
+    
     var body: some View {
         HStack(spacing: 20) {
             Button(action: { showBettingView = true }) {
