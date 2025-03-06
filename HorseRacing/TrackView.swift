@@ -31,25 +31,93 @@ struct TrackView: View {
     
     // MARK: - Track Background
     private var trackBackground: some View {
-        RoundedRectangle(cornerRadius: 15)
-            .fill(LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(hex: "8B4513").opacity(0.3),
-                    Color(hex: "8B4513").opacity(0.4)
-                ]),
-                startPoint: .leading,
-                endPoint: .trailing
-            ))
-            .frame(width: trackWidth, height: 400)
-            .overlay(
-                VStack(spacing: horseSpacing) {
-                    ForEach(0..<9, id: \.self) { _ in
-                        Rectangle()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(height: 1)
+        ZStack {
+            // Base track with gradient
+            RoundedRectangle(cornerRadius: 15)
+                .fill(LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "8B4513").opacity(0.5),
+                        Color(hex: "8B4513").opacity(0.3)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                ))
+                .frame(width: trackWidth, height: 400)
+            
+            // Track lanes with alternating colors
+            VStack(spacing: 0) {
+                ForEach(0..<8, id: \.self) { index in
+                    Rectangle()
+                        .fill(index % 2 == 0 ?
+                              Color(hex: "8B4513").opacity(0.4) :
+                              Color(hex: "8B4513").opacity(0.3))
+                        .frame(height: 45)
+                }
+            }
+            .frame(width: trackWidth)
+            
+            // Lane dividers
+            VStack(spacing: horseSpacing + 25) {
+                ForEach(0..<9, id: \.self) { _ in
+                    Rectangle()
+                        .fill(Color.white.opacity(0.4))
+                        .frame(height: 2)
+                        .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+                }
+            }
+            
+            // Start line
+            Rectangle()
+                .fill(Color.white.opacity(0.6))
+                .frame(width: 5, height: 400)
+                .offset(x: -trackWidth/2 + 50)
+            
+            // Finish line - checkered pattern
+            HStack(spacing: 0) {
+                ForEach(0..<8, id: \.self) { row in
+                    VStack(spacing: 0) {
+                        ForEach(0..<16, id: \.self) { col in
+                            Rectangle()
+                                .fill((row + col) % 2 == 0 ? Color.black : Color.white)
+                                .frame(width: 10, height: 10)
+                        }
                     }
                 }
-            )
+            }
+            .frame(width: 80, height: 400)
+            .offset(x: trackWidth/2 - 60)
+            
+            // Distance markers
+            ForEach(1..<5) { i in
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 2, height: 400)
+                    .offset(x: -trackWidth/2 + (trackWidth * CGFloat(i) / 5))
+            }
+            
+            // Crowd silhouettes at the top and bottom
+            HStack(spacing: 5) {
+                ForEach(0..<Int(trackWidth/20), id: \.self) { _ in
+                    Circle()
+                        .fill(Color.black.opacity(0.2))
+                        .frame(width: 15, height: 10)
+                        .offset(y: -3)
+                }
+            }
+            .frame(width: trackWidth)
+            .offset(y: -195)
+            
+            HStack(spacing: 5) {
+                ForEach(0..<Int(trackWidth/20), id: \.self) { _ in
+                    Circle()
+                        .fill(Color.black.opacity(0.2))
+                        .frame(width: 15, height: 10)
+                        .offset(y: 3)
+                }
+            }
+            .frame(width: trackWidth)
+            .offset(y: 195)
+        }
     }
     
     // MARK: - Finish Line

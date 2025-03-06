@@ -27,7 +27,7 @@ struct HorseRacingView: View {
     @State private var startingPositions: [CGFloat] = Array(repeating: 0, count: 8)
     @State private var scrollOffset: CGFloat = 0
     
-    let trackWidth: CGFloat = UIScreen.main.bounds.width * 1.5
+    let trackWidth: CGFloat = UIScreen.main.bounds.width
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
     
