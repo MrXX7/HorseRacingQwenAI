@@ -15,18 +15,25 @@ struct WinnerView: View {
     
     var body: some View {
         VStack {
-            Text("🏆 \(horseNames[winner]) Wins! 🏆")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(.yellow)
-            
+            winnerText
             if selectedHorse == winner {
-                Text("You won \(betAmount * 2) coins! 🎉")
-                    .font(.title3)
-                    .foregroundColor(.green)
+                winningMessage
             }
         }
         .transition(.scale.combined(with: .opacity))
         .padding(.vertical)
+    }
+    
+    private var winnerText: some View {
+        Text("🏆 \(horseNames[winner]) Wins! 🏆")
+            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .foregroundColor(.yellow)
+    }
+    
+    private var winningMessage: some View {
+        Text("You won \(betAmount * 2) coins! 🎉")
+            .font(.title3)
+            .foregroundColor(.green)
     }
 }
 
