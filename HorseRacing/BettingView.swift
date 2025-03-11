@@ -18,54 +18,69 @@ struct BettingView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Select Horse")) {
-                    ForEach(horseNames.indices, id: \.self) { index in
-                        HStack {
-                            Image("a")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 40, height: 40)
-                            
-                            Text(horseNames[index])
-                            
-                            Spacer()
-                            
-                            if selectedHorse == index {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedHorse = index
-                        }
-                    }
-                }
-                
-                Section(header: Text("Bet Amount")) {
-                    TextField("Enter amount", text: $tempBetAmount)
-                        .keyboardType(.numberPad)
-                    
-                    Text("Available Coins: \(coins)")
-                        .foregroundColor(.secondary)
-                }
+                horseSelectionSection
+                betAmountSection
             }
             .navigationTitle("Place Your Bet")
             .navigationBarItems(
-                leading: Button("Cancel") {
-                    isPresented = false
-                },
-                trailing: Button("Confirm") {
-                    if let amount = Int(tempBetAmount),
-                       amount <= coins,
-                       selectedHorse != nil {
-                        betAmount = amount
-                        coins -= amount
-                        isPresented = false
-                    }
-                }
-                .disabled(selectedHorse == nil || Int(tempBetAmount) ?? 0 > coins)
+                leading: cancelButton,
+                trailing: confirmButton
             )
         }
+    }
+    
+    private var horseSelectionSection: some View {
+        Section(header: Text("Select Horse")) {
+            ForEach(horseNames.indices, id: \.self) { index in
+                HStack {
+                    Image("a")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                    
+                    Text(horseNames[index])
+                    
+                    Spacer()
+                    
+                    if selectedHorse == index {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    selectedHorse = index
+                }
+            }
+        }
+    }
+    
+    private var betAmountSection: some View {
+        Section(header: Text("Bet Amount")) {
+            TextField("Enter amount", text: $tempBetAmount)
+                .keyboardType(.numberPad)
+            
+            Text("Available Coins: \(coins)")
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var cancelButton: some View {
+        Button("Cancel") {
+            isPresented = false
+        }
+    }
+    
+    private var confirmButton: some View {
+        Button("Confirm") {
+            if let amount = Int(tempBetAmount),
+               amount <= coins,
+               selectedHorse != nil {
+                betAmount = amount
+                coins -= amount
+                isPresented = false
+            }
+        }
+        .disabled(selectedHorse == nil || Int(tempBetAmount) ?? 0 > coins)
     }
 }
