@@ -87,8 +87,7 @@ struct HorseRacingView: View {
                             let leadingHorsePosition = newPositions.max() ?? 0
                             let scrollPosition = max(0, leadingHorsePosition - UIScreen.main.bounds.width / 2)
                             withAnimation {
-                                scrollProxy.scrollTo("horse0", anchor: .leading)
-                                scrollOffset = scrollPosition
+                                scrollProxy.scrollTo(scrollPosition, anchor: .leading)
                             }
                         }
                     }
