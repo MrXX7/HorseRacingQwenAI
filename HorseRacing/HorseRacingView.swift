@@ -8,7 +8,6 @@
 import SwiftUI
 import AVFAudio
 
-// Renk hex değeri için extension
 struct HorseRacingView: View {
     @State private var positions: [CGFloat] = Array(repeating: 0, count: 8)
     @State private var isRacing = false
@@ -24,8 +23,8 @@ struct HorseRacingView: View {
         "Night Rider", "Wind Runner", "Storm Chaser",
         "Lightning Strike", "Desert King"
     ]
-    @State private var startingPositions: [CGFloat] = Array(repeating: 0, count: 8)
-    @State private var scrollOffset: CGFloat = 0
+    @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
+    @State private var timer: Timer? = nil
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width
     let horseSpacing: CGFloat = 20
@@ -131,48 +130,43 @@ struct HorseRacingView: View {
         
         startRaceSetup()
         
-        let finishLine = calculateFinishLine()
-        let raceDurations = generateRaceDurations()
-        
-        animateHorsesToFinishLine(finishLine: finishLine, raceDurations: raceDurations)
-        
-        determineWinner(raceDurations: raceDurations)
-        
-        resetRaceAfterCompletion(raceDurations: raceDurations)
+        // Start the race timer
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            updateHorsePositions()
+        }
     }
 
     private func startRaceSetup() {
         isRacing = true
         winner = nil
         raceFinished = false
-        startingPositions = positions
+        positions = Array(repeating: 0, count: 8)
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 1...3) }
     }
 
-    private func calculateFinishLine() -> CGFloat {
-        return trackWidth - horseSize - 40
-    }
-
-    private func generateRaceDurations() -> [Double] {
-        return (0..<8).map { _ in Double.random(in: 15...20) }
-    }
-
-    private func animateHorsesToFinishLine(finishLine: CGFloat, raceDurations: [Double]) {
+    private func updateHorsePositions() {
         for index in positions.indices {
-            let distanceToFinish = finishLine - startingPositions[index]
-            withAnimation(Animation.linear(duration: raceDurations[index]).delay(0.1)) {
-                positions[index] += distanceToFinish
+            // Randomly adjust speed to make the race more dynamic
+            let speedAdjustment = Double.random(in: -0.5...0.5)
+            horseSpeeds[index] += speedAdjustment
+            horseSpeeds[index] = max(1, min(5, horseSpeeds[index])) // Keep speed within bounds
+            
+            positions[index] += CGFloat(horseSpeeds[index])
+            
+            // Check if the horse has crossed the finish line
+            if positions[index] >= trackWidth - horseSize - 40 {
+                finishRace(winningHorse: index)
+                return
             }
         }
     }
 
-    private func determineWinner(raceDurations: [Double]) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.min()!) {
-            if let winningIndex = raceDurations.firstIndex(of: raceDurations.min()!) {
-                winner = winningIndex
-                raceFinished = true
-                processBetResult(winningIndex: winningIndex)
-            }
-        }
+    private func finishRace(winningHorse: Int) {
+        timer?.invalidate()
+        timer = nil
+        winner = winningHorse
+        raceFinished = true
+        processBetResult(winningIndex: winningHorse)
     }
 
     private func processBetResult(winningIndex: Int) {
@@ -186,8 +180,8 @@ struct HorseRacingView: View {
         }
     }
 
-    private func resetRaceAfterCompletion(raceDurations: [Double]) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + raceDurations.max()! + 2) {
+    private func resetRaceAfterCompletion() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation {
                 positions = Array(repeating: 0, count: 8)
                 isRacing = false
