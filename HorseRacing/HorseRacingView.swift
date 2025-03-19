@@ -32,14 +32,14 @@ struct HorseRacingView: View {
     
     var body: some View {
         ZStack {
-            // Arkaplan
+            // Background
             LinearGradient(gradient: Gradient(colors: [
                 Color(hex: "87CEEB"),
                 Color(hex: "90EE90")
             ]), startPoint: .top, endPoint: .bottom)
             .edgesIgnoringSafeArea(.all)
             
-            // Bulutlar
+            // Clouds
             ForEach(0..<5) { i in
                 Image(systemName: "cloud.fill")
                     .foregroundColor(.white.opacity(0.7))
@@ -47,7 +47,7 @@ struct HorseRacingView: View {
             }
             
             VStack(spacing: 20) {
-                // Başlık
+                // Title
                 HStack {
                     Image(systemName: "flag.fill")
                         .foregroundColor(.yellow)
@@ -59,7 +59,7 @@ struct HorseRacingView: View {
                 }
                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                 
-                // Coin Göstergesi
+                // Coin Display
                 HStack {
                     Image(systemName: "bitcoinsign.circle.fill")
                         .foregroundColor(.yellow)
@@ -71,7 +71,7 @@ struct HorseRacingView: View {
                 .background(Color.black.opacity(0.3))
                 .cornerRadius(15)
                 
-                // Yarış Pisti
+                // Race Track
                 ScrollViewReader { scrollProxy in
                     ScrollView(.horizontal, showsIndicators: false) {
                         TrackView(positions: $positions,
@@ -93,7 +93,7 @@ struct HorseRacingView: View {
                 }
                 .padding(.horizontal)
                 
-                // Kazanan Göstergesi
+                // Winner Display
                 if raceFinished, let winner = winner {
                     WinnerView(horseNames: horseNames,
                              winner: winner,
@@ -101,10 +101,47 @@ struct HorseRacingView: View {
                              betAmount: betAmount)
                 }
                 
-                // Kontrol Butonları
-                ControlButtonsView(isRacing: $isRacing,
-                                 showBettingView: $showBettingView,
-                                 startRace: startRace)
+                // Control Buttons
+                HStack(spacing: 20) {
+                    // Bet Button
+                    Button(action: {
+                        showBettingView = true
+                    }) {
+                        Text("Place Bet")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    
+                    // Start Race Button
+                    Button(action: {
+                        startRace()
+                    }) {
+                        Text(isRacing ? "Racing..." : "Start Race")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(isRacing ? Color.gray : Color.green)
+                            .cornerRadius(10)
+                    }
+                    .disabled(isRacing)
+                    
+                    // Reset Button
+                    if raceFinished {
+                        Button(action: {
+                            resetRace()
+                        }) {
+                            Text("Reset")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.red)
+                                .cornerRadius(10)
+                        }
+                    }
+                }
             }
             .padding(.vertical)
         }
@@ -122,7 +159,7 @@ struct HorseRacingView: View {
     func startRace() {
         guard !isRacing else { return }
         
-        // Bahis kontrolü
+        // Bet validation
         if let selectedHorse = selectedHorse {
             guard coins >= betAmount else { return }
             coins -= betAmount
@@ -167,6 +204,11 @@ struct HorseRacingView: View {
         winner = winningHorse
         raceFinished = true
         processBetResult(winningIndex: winningHorse)
+        
+        // Automatically reset after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            resetRace()
+        }
     }
 
     private func processBetResult(winningIndex: Int) {
@@ -180,14 +222,13 @@ struct HorseRacingView: View {
         }
     }
 
-    private func resetRaceAfterCompletion() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation {
-                positions = Array(repeating: 0, count: 8)
-                isRacing = false
-                selectedHorse = nil
-                betAmount = 0
-            }
+    private func resetRace() {
+        withAnimation {
+            positions = Array(repeating: 0, count: 8)
+            isRacing = false
+            raceFinished = false
+            selectedHorse = nil
+            betAmount = 0
         }
     }
     
