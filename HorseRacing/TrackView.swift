@@ -166,3 +166,5 @@ struct TrackView: View {
             .offset(y: -35) // Position name above the horse
     }
 }
+
+

@@ -9,15 +9,11 @@ import SwiftUI
 import AVFAudio
 
 struct HorseRacingView: View {
-    @State private var positions: [CGFloat] = Array(repeating: 35, count: 8)
+    @State private var positions: [CGFloat] = Array(repeating: 20, count: 8)
     @State private var isRacing = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
     @State private var raceFinished = false
-    @State private var selectedHorse: Int? = nil
-    @State private var showBettingView = false
-    @State private var coins = 1000
-    @State private var betAmount = 0
     @State private var horseNames = [
         "Thunder Bolt", "Silver Star", "Golden Flash",
         "Night Rider", "Wind Runner", "Storm Chaser",
@@ -26,20 +22,20 @@ struct HorseRacingView: View {
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
     
-    let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Yarış pistini daha uzun yap
+    let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Track width
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
     
     var body: some View {
         ZStack {
-            // Arka plan
+            // Background
             LinearGradient(gradient: Gradient(colors: [
                 Color(hex: "87CEEB"),
                 Color(hex: "90EE90")
             ]), startPoint: .top, endPoint: .bottom)
             .edgesIgnoringSafeArea(.all)
             
-            // Bulutlar
+            // Clouds
             ForEach(0..<5) { i in
                 Image(systemName: "cloud.fill")
                     .foregroundColor(.white.opacity(0.7))
@@ -47,7 +43,7 @@ struct HorseRacingView: View {
             }
             
             VStack(spacing: 20) {
-                // Başlık
+                // Title
                 HStack {
                     Image(systemName: "flag.fill")
                         .foregroundColor(.yellow)
@@ -59,19 +55,7 @@ struct HorseRacingView: View {
                 }
                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                 
-                // Coin Gösterimi
-                HStack {
-                    Image(systemName: "bitcoinsign.circle.fill")
-                        .foregroundColor(.yellow)
-                    Text("\(coins) Coins")
-                        .font(.system(.title3, design: .rounded))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(15)
-                
-                // Yarış Pistini Kaydırma
+                // Race Track with ScrollView
                 ScrollViewReader { scrollProxy in
                     ScrollView(.horizontal, showsIndicators: false) {
                         TrackView(positions: $positions,
@@ -80,13 +64,13 @@ struct HorseRacingView: View {
                                 trackWidth: trackWidth,
                                 horseSpacing: horseSpacing,
                                 horseSize: horseSize)
-                        .frame(width: trackWidth) // Pist genişliği
+                        .frame(width: trackWidth) // Match the track width
                     }
                     .onChange(of: positions) { newPositions in
                         if isRacing {
-                            // Lider atın konumunu bul
+                            // Find the leading horse's position
                             let leadingHorsePosition = newPositions.max() ?? 0
-                            // ScrollView'ı lider atın konumuna kaydır
+                            // Scroll to the leading horse's position
                             withAnimation {
                                 scrollProxy.scrollTo(leadingHorsePosition, anchor: .leading)
                             }
@@ -95,29 +79,14 @@ struct HorseRacingView: View {
                 }
                 .padding(.horizontal)
                 
-                // Kazananı Göster
-                if raceFinished, let winner = winner {
-                    WinnerView(horseNames: horseNames,
-                             winner: winner,
-                             selectedHorse: selectedHorse,
-                             betAmount: betAmount)
-                }
+                // Winner Display
+//                if raceFinished, let winner = winner {
+//                    WinnerView(horseNames: horseNames, winner: winner)
+//                }
                 
-                // Kontrol Butonları
+                // Control Buttons
                 HStack(spacing: 20) {
-                    // Bahis Butonu
-                    Button(action: {
-                        showBettingView = true
-                    }) {
-                        Text("Place Bet")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                    
-                    // Yarışı Başlat Butonu
+                    // Start Race Button
                     Button(action: {
                         startRace()
                     }) {
@@ -130,7 +99,7 @@ struct HorseRacingView: View {
                     }
                     .disabled(isRacing)
                     
-                    // Sıfırla Butonu
+                    // Reset Button
                     if raceFinished {
                         Button(action: {
                             resetRace()
@@ -147,29 +116,14 @@ struct HorseRacingView: View {
             }
             .padding(.vertical)
         }
-        .sheet(isPresented: $showBettingView) {
-            BettingView(
-                horseNames: horseNames,
-                selectedHorse: $selectedHorse,
-                betAmount: $betAmount,
-                coins: $coins,
-                isPresented: $showBettingView
-            )
-        }
     }
     
     func startRace() {
         guard !isRacing else { return }
         
-        // Bahis kontrolü
-        if let selectedHorse = selectedHorse {
-            guard coins >= betAmount else { return }
-            coins -= betAmount
-        }
-        
         startRaceSetup()
         
-        // Yarış zamanlayıcısını başlat
+        // Start the race timer
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             updateHorsePositions()
         }
@@ -179,20 +133,20 @@ struct HorseRacingView: View {
         isRacing = true
         winner = nil
         raceFinished = false
-        positions = Array(repeating: 35, count: 8)
-        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Atların hızını ayarla
+        positions = Array(repeating: 20, count: 8)
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Adjust horse speeds
     }
 
     private func updateHorsePositions() {
         for index in positions.indices {
-            // Atların hızını rastgele ayarla
+            // Randomly adjust speed to make the race dynamic
             let speedAdjustment = Double.random(in: -0.5...0.5)
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hız sınırlarını koru
+            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Keep speed within bounds
             
             positions[index] += CGFloat(horseSpeeds[index])
             
-            // Atların bitiş çizgisini geçip geçmediğini kontrol et
+            // Check if the horse has crossed the finish line
             if positions[index] >= trackWidth - horseSize - 40 {
                 finishRace(winningHorse: index)
                 return
@@ -205,32 +159,18 @@ struct HorseRacingView: View {
         timer = nil
         winner = winningHorse
         raceFinished = true
-        processBetResult(winningIndex: winningHorse)
         
-        // Otomatik olarak 2 saniye sonra sıfırla
+        // Automatically reset after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             resetRace()
         }
     }
 
-    private func processBetResult(winningIndex: Int) {
-        if let selectedHorse = selectedHorse {
-            if selectedHorse == winningIndex {
-                coins += betAmount * 2
-                playSound(sound: "win", type: "mp3")
-            } else {
-                playSound(sound: "lose", type: "mp3")
-            }
-        }
-    }
-
     private func resetRace() {
         withAnimation {
-            positions = Array(repeating: 35, count: 8)
+            positions = Array(repeating: 0, count: 8)
             isRacing = false
             raceFinished = false
-            selectedHorse = nil
-            betAmount = 0
         }
     }
     
@@ -240,7 +180,7 @@ struct HorseRacingView: View {
                 audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
                 audioPlayer?.play()
             } catch {
-                print("Ses çalınamadı")
+                print("Failed to play sound")
             }
         }
     }
