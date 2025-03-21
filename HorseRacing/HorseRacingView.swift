@@ -26,20 +26,20 @@ struct HorseRacingView: View {
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
     
-    let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Increased track width
+    let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Yarış pistini daha uzun yap
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
     
     var body: some View {
         ZStack {
-            // Background
+            // Arka plan
             LinearGradient(gradient: Gradient(colors: [
                 Color(hex: "87CEEB"),
                 Color(hex: "90EE90")
             ]), startPoint: .top, endPoint: .bottom)
             .edgesIgnoringSafeArea(.all)
             
-            // Clouds
+            // Bulutlar
             ForEach(0..<5) { i in
                 Image(systemName: "cloud.fill")
                     .foregroundColor(.white.opacity(0.7))
@@ -47,7 +47,7 @@ struct HorseRacingView: View {
             }
             
             VStack(spacing: 20) {
-                // Title
+                // Başlık
                 HStack {
                     Image(systemName: "flag.fill")
                         .foregroundColor(.yellow)
@@ -59,7 +59,7 @@ struct HorseRacingView: View {
                 }
                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                 
-                // Coin Display
+                // Coin Gösterimi
                 HStack {
                     Image(systemName: "bitcoinsign.circle.fill")
                         .foregroundColor(.yellow)
@@ -71,7 +71,7 @@ struct HorseRacingView: View {
                 .background(Color.black.opacity(0.3))
                 .cornerRadius(15)
                 
-                // Race Track
+                // Yarış Pistini Kaydırma
                 ScrollViewReader { scrollProxy in
                     ScrollView(.horizontal, showsIndicators: false) {
                         TrackView(positions: $positions,
@@ -80,24 +80,22 @@ struct HorseRacingView: View {
                                 trackWidth: trackWidth,
                                 horseSpacing: horseSpacing,
                                 horseSize: horseSize)
-                        .frame(width: trackWidth) // İçerik genişliğini artır
-                            .onAppear {
-                                // Başlangıçta ScrollView'ı sola kaydır
-                                scrollProxy.scrollTo(trackWidth, anchor: .trailing)                            }
+                        .frame(width: trackWidth) // Pist genişliği
                     }
                     .onChange(of: positions) { newPositions in
                         if isRacing {
+                            // Lider atın konumunu bul
                             let leadingHorsePosition = newPositions.max() ?? 0
-                            let scrollPosition = max(0, leadingHorsePosition - UIScreen.main.bounds.width / 2)
+                            // ScrollView'ı lider atın konumuna kaydır
                             withAnimation {
-                                scrollProxy.scrollTo(scrollPosition, anchor: .leading)
+                                scrollProxy.scrollTo(leadingHorsePosition, anchor: .leading)
                             }
                         }
                     }
                 }
                 .padding(.horizontal)
                 
-                // Winner Display
+                // Kazananı Göster
                 if raceFinished, let winner = winner {
                     WinnerView(horseNames: horseNames,
                              winner: winner,
@@ -105,9 +103,9 @@ struct HorseRacingView: View {
                              betAmount: betAmount)
                 }
                 
-                // Control Buttons
+                // Kontrol Butonları
                 HStack(spacing: 20) {
-                    // Bet Button
+                    // Bahis Butonu
                     Button(action: {
                         showBettingView = true
                     }) {
@@ -119,7 +117,7 @@ struct HorseRacingView: View {
                             .cornerRadius(10)
                     }
                     
-                    // Start Race Button
+                    // Yarışı Başlat Butonu
                     Button(action: {
                         startRace()
                     }) {
@@ -132,7 +130,7 @@ struct HorseRacingView: View {
                     }
                     .disabled(isRacing)
                     
-                    // Reset Button
+                    // Sıfırla Butonu
                     if raceFinished {
                         Button(action: {
                             resetRace()
@@ -163,7 +161,7 @@ struct HorseRacingView: View {
     func startRace() {
         guard !isRacing else { return }
         
-        // Bet validation
+        // Bahis kontrolü
         if let selectedHorse = selectedHorse {
             guard coins >= betAmount else { return }
             coins -= betAmount
@@ -171,8 +169,8 @@ struct HorseRacingView: View {
         
         startRaceSetup()
         
-        // Start the race timer
-        timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { _ in // Increased time interval
+        // Yarış zamanlayıcısını başlat
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             updateHorsePositions()
         }
     }
@@ -182,19 +180,19 @@ struct HorseRacingView: View {
         winner = nil
         raceFinished = false
         positions = Array(repeating: 35, count: 8)
-        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Reduced speed range
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Atların hızını ayarla
     }
 
     private func updateHorsePositions() {
         for index in positions.indices {
-            // Randomly adjust speed to make the race more dynamic
+            // Atların hızını rastgele ayarla
             let speedAdjustment = Double.random(in: -0.5...0.5)
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Keep speed within bounds
+            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hız sınırlarını koru
             
             positions[index] += CGFloat(horseSpeeds[index])
             
-            // Check if the horse has crossed the finish line
+            // Atların bitiş çizgisini geçip geçmediğini kontrol et
             if positions[index] >= trackWidth - horseSize - 40 {
                 finishRace(winningHorse: index)
                 return
@@ -209,7 +207,7 @@ struct HorseRacingView: View {
         raceFinished = true
         processBetResult(winningIndex: winningHorse)
         
-        // Automatically reset after 2 seconds
+        // Otomatik olarak 2 saniye sonra sıfırla
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             resetRace()
         }
@@ -228,7 +226,7 @@ struct HorseRacingView: View {
 
     private func resetRace() {
         withAnimation {
-            positions = Array(repeating: 0, count: 8)
+            positions = Array(repeating: 35, count: 8)
             isRacing = false
             raceFinished = false
             selectedHorse = nil
@@ -242,7 +240,7 @@ struct HorseRacingView: View {
                 audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
                 audioPlayer?.play()
             } catch {
-                print("Failed to play sound")
+                print("Ses çalınamadı")
             }
         }
     }
