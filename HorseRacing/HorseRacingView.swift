@@ -9,7 +9,7 @@ import SwiftUI
 import AVFAudio
 
 struct HorseRacingView: View {
-    @State private var positions: [CGFloat] = Array(repeating: 0, count: 8)
+    @State private var positions: [CGFloat] = Array(repeating: 35, count: 8)
     @State private var isRacing = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
@@ -26,7 +26,7 @@ struct HorseRacingView: View {
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
     
-    let trackWidth: CGFloat = UIScreen.main.bounds.width
+    let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Increased track width
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
     
@@ -80,6 +80,10 @@ struct HorseRacingView: View {
                                 trackWidth: trackWidth,
                                 horseSpacing: horseSpacing,
                                 horseSize: horseSize)
+                        .frame(width: trackWidth) // İçerik genişliğini artır
+                            .onAppear {
+                                // Başlangıçta ScrollView'ı sola kaydır
+                                scrollProxy.scrollTo(trackWidth, anchor: .trailing)                            }
                     }
                     .onChange(of: positions) { newPositions in
                         if isRacing {
@@ -168,7 +172,7 @@ struct HorseRacingView: View {
         startRaceSetup()
         
         // Start the race timer
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { _ in // Increased time interval
             updateHorsePositions()
         }
     }
@@ -177,8 +181,8 @@ struct HorseRacingView: View {
         isRacing = true
         winner = nil
         raceFinished = false
-        positions = Array(repeating: 0, count: 8)
-        horseSpeeds = (0..<8).map { _ in Double.random(in: 1...3) }
+        positions = Array(repeating: 35, count: 8)
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Reduced speed range
     }
 
     private func updateHorsePositions() {
@@ -186,7 +190,7 @@ struct HorseRacingView: View {
             // Randomly adjust speed to make the race more dynamic
             let speedAdjustment = Double.random(in: -0.5...0.5)
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(1, min(5, horseSpeeds[index])) // Keep speed within bounds
+            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Keep speed within bounds
             
             positions[index] += CGFloat(horseSpeeds[index])
             
