@@ -9,31 +9,30 @@ import SwiftUI
 
 struct WinnerView: View {
     let horseNames: [String]
-    let winner: Int
-    let selectedHorse: Int?
-    let betAmount: Int
+    let finishedHorses: [Int] // Bitiren atların sırası
     
     var body: some View {
-        VStack {
-            winnerText
-            if selectedHorse == winner {
-                winningMessage
+        VStack(spacing: 10) {
+            Text("🏆 Race Finished! 🏆")
+                .font(.title)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.green)
+                .cornerRadius(10)
+            
+            ForEach(Array(finishedHorses.enumerated()), id: \.element) { index, horse in
+                Text("\(index + 1). \(horseNames[horse])")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(index == 0 ? Color.blue : Color.gray) // Kazananı vurgula
+                    .cornerRadius(10)
             }
         }
-        .transition(.scale.combined(with: .opacity))
-        .padding(.vertical)
-    }
-    
-    private var winnerText: some View {
-        Text("🏆 \(horseNames[winner]) Wins! 🏆")
-            .font(.system(size: 28, weight: .bold, design: .rounded))
-            .foregroundColor(.yellow)
-    }
-    
-    private var winningMessage: some View {
-        Text("You won \(betAmount * 2) coins! 🎉")
-            .font(.title3)
-            .foregroundColor(.green)
+        .padding()
+        .background(Color.black.opacity(0.7))
+        .cornerRadius(15)
+        .shadow(radius: 10)
     }
 }
 

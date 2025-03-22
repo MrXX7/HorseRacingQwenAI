@@ -21,6 +21,7 @@ struct HorseRacingView: View {
     ]
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
+    @State private var finishedHorses: [Int] = [] 
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Track width
     let horseSpacing: CGFloat = 20
@@ -138,37 +139,44 @@ struct HorseRacingView: View {
     }
 
     private func updateHorsePositions() {
-            let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
+        let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
+        
+        for index in positions.indices {
+            // Eğer at zaten bitiş çizgisini geçtiyse, diğer atlara odaklan
+            if positions[index] >= finishLine {
+                continue // Bu atı atla ve diğer atları güncellemeye devam et
+            }
             
-            for index in positions.indices {
-                // Rastgele hız ayarlaması yap
-                let speedAdjustment = Double.random(in: -0.1...0.1) // Daha küçük ayarlama
-                horseSpeeds[index] += speedAdjustment
-                horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hızı sınırla
-                
-                // Atın konumunu güncelle
-                positions[index] += CGFloat(horseSpeeds[index])
-                
-                // Debug: At hızı ve konumunu logla
-                print("Horse \(index) speed: \(horseSpeeds[index]), position: \(positions[index])")
-                
-                // Bitiş çizgisini geçti mi kontrol et
-                if positions[index] >= finishLine {
-                    finishRace(winningHorse: index)
-                    // Birden fazla atın bitirmesine izin vermek için return kaldırılabilir
-                }
+            // Rastgele hız ayarlaması yap
+            let speedAdjustment = Double.random(in: -0.1...0.1) // Daha küçük ayarlama
+            horseSpeeds[index] += speedAdjustment
+            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hızı sınırla
+            
+            // Atın konumunu güncelle
+            positions[index] += CGFloat(horseSpeeds[index])
+            
+            // Debug: At hızı ve konumunu logla
+            print("Horse \(index) speed: \(horseSpeeds[index]), position: \(positions[index])")
+            
+            // Bitiş çizgisini geçti mi kontrol et
+            if positions[index] >= finishLine {
+                // Kazanan atı işle (birden fazla at bitirebilir)
+                finishRace(winningHorse: index)
             }
         }
+    }
 
     private func finishRace(winningHorse: Int) {
-        timer?.invalidate()
-        timer = nil
-        winner = winningHorse
-        raceFinished = true
+        // Kazanan atı listeye ekle
+        if !finishedHorses.contains(winningHorse) {
+            finishedHorses.append(winningHorse)
+        }
         
-        // Automatically reset after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            resetRace()
+        // Tüm atlar bitirdiyse yarışı sonlandır
+        if finishedHorses.count == horseNames.count {
+            timer?.invalidate()
+            timer = nil
+            raceFinished = true
         }
     }
 
