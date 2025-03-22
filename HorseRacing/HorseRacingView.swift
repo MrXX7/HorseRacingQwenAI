@@ -138,21 +138,27 @@ struct HorseRacingView: View {
     }
 
     private func updateHorsePositions() {
-        for index in positions.indices {
-            // Randomly adjust speed to make the race dynamic
-            let speedAdjustment = Double.random(in: -0.5...0.5)
-            horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Keep speed within bounds
+            let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
             
-            positions[index] += CGFloat(horseSpeeds[index])
-            
-            // Check if the horse has crossed the finish line
-            if positions[index] >= trackWidth - horseSize - 40 {
-                finishRace(winningHorse: index)
-                return
+            for index in positions.indices {
+                // Rastgele hız ayarlaması yap
+                let speedAdjustment = Double.random(in: -0.1...0.1) // Daha küçük ayarlama
+                horseSpeeds[index] += speedAdjustment
+                horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hızı sınırla
+                
+                // Atın konumunu güncelle
+                positions[index] += CGFloat(horseSpeeds[index])
+                
+                // Debug: At hızı ve konumunu logla
+                print("Horse \(index) speed: \(horseSpeeds[index]), position: \(positions[index])")
+                
+                // Bitiş çizgisini geçti mi kontrol et
+                if positions[index] >= finishLine {
+                    finishRace(winningHorse: index)
+                    // Birden fazla atın bitirmesine izin vermek için return kaldırılabilir
+                }
             }
         }
-    }
 
     private func finishRace(winningHorse: Int) {
         timer?.invalidate()
