@@ -36,8 +36,8 @@ struct TrackView: View {
             RoundedRectangle(cornerRadius: 15)
                 .fill(LinearGradient(
                     gradient: Gradient(colors: [
-                        Color(hex: "8B4513").opacity(0.5),
-                        Color(hex: "8B4513").opacity(0.3)
+                        Color(hex: "03872a").opacity(0.5),
+                        Color(hex: "03872a").opacity(0.3)
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -49,8 +49,8 @@ struct TrackView: View {
                 ForEach(0..<8, id: \.self) { index in
                     Rectangle()
                         .fill(index % 2 == 0 ?
-                              Color(hex: "8B4513").opacity(0.4) :
-                              Color(hex: "8B4513").opacity(0.3))
+                              Color(hex: "03872a").opacity(0.4) :
+                              Color(hex: "03872a").opacity(0.3))
                         .frame(height: 45)
                 }
             }
