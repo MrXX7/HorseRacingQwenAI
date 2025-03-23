@@ -80,12 +80,6 @@ struct HorseRacingView: View {
                 }
                 .padding(.horizontal)
                 
-                // Winner Display
-//                if raceFinished, let winner = winner {
-//                    WinnerView(horseNames: horseNames, winner: winner)
-//                }
-                
-                // Control Buttons
                 HStack(spacing: 20) {
                     // Start Race Button
                     Button(action: {
@@ -135,7 +129,7 @@ struct HorseRacingView: View {
         winner = nil
         raceFinished = false
         positions = Array(repeating: 20, count: 8)
-        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.5) } // Adjust horse speeds
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.2) } // Adjust horse speeds
     }
 
     private func updateHorsePositions() {
@@ -150,7 +144,7 @@ struct HorseRacingView: View {
             // Rastgele hız ayarlaması yap
             let speedAdjustment = Double.random(in: -0.1...0.1) // Daha küçük ayarlama
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(2, horseSpeeds[index])) // Hızı sınırla
+            horseSpeeds[index] = max(0.5, min(1.2, horseSpeeds[index])) // Hızı sınırla
             
             // Atın konumunu güncelle
             positions[index] += CGFloat(horseSpeeds[index])
@@ -181,12 +175,13 @@ struct HorseRacingView: View {
     }
 
     private func resetRace() {
-        withAnimation {
-            positions = Array(repeating: 0, count: 8)
-            isRacing = false
-            raceFinished = false
+            withAnimation {
+                positions = Array(repeating: 0, count: 8)
+                isRacing = false
+                raceFinished = false
+                finishedHorses.removeAll() // Bitiren atların listesini temizle
+            }
         }
-    }
     
     func playSound(sound: String, type: String) {
         if let path = Bundle.main.path(forResource: sound, ofType: type) {
