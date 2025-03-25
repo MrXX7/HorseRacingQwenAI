@@ -139,9 +139,9 @@ struct TrackView: View {
                 horseImage(index: index)
                 horseName(index: index)
             }
-            .offset(x: positions[index] - trackWidth / 2, // Adjust horse position
-                    y: CGFloat(index * 45) - 156) // Vertical spacing between horses
-            .id("horse\(index)") // Unique ID for ScrollView tracking
+            .offset(x: positions[index] - trackWidth / 2,
+                    y: CGFloat(index * 45) - 156)
+            // .id("horse\(index)") kaldırın
         }
     }
     

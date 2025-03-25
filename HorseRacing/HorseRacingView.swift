@@ -11,6 +11,7 @@ import AVFAudio
 struct HorseRacingView: View {
     @State private var positions: [CGFloat] = Array(repeating: 20, count: 8)
     @State private var isRacing = false
+    @State private var isPaused = false
     @State private var winner: Int? = nil
     @State private var audioPlayer: AVAudioPlayer?
     @State private var raceFinished = false
@@ -21,7 +22,7 @@ struct HorseRacingView: View {
     ]
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
-    @State private var finishedHorses: [Int] = [] 
+    @State private var finishedHorses: [Int] = []
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Track width
     let horseSpacing: CGFloat = 20
@@ -57,42 +58,48 @@ struct HorseRacingView: View {
                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                 
                 // Race Track with ScrollView
-                ScrollViewReader { scrollProxy in
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        TrackView(positions: $positions,
-                                isRacing: $isRacing,
-                                horseNames: horseNames,
-                                trackWidth: trackWidth,
-                                horseSpacing: horseSpacing,
-                                horseSize: horseSize)
-                        .frame(width: trackWidth) // Match the track width
-                    }
-                    .onChange(of: positions) { newPositions in
-                        if isRacing {
-                            // Find the leading horse's position
-                            let leadingHorsePosition = newPositions.max() ?? 0
-                            // Scroll to the leading horse's position
-                            withAnimation {
-                                scrollProxy.scrollTo(leadingHorsePosition, anchor: .leading)
-                            }
-                        }
-                    }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    TrackView(positions: $positions,
+                              isRacing: $isRacing,
+                              horseNames: horseNames,
+                              trackWidth: trackWidth,
+                              horseSpacing: horseSpacing,
+                              horseSize: horseSize)
+                    .frame(width: trackWidth)
                 }
                 .padding(.horizontal)
                 
                 HStack(spacing: 20) {
-                    // Start Race Button
+                    // Start/Continue Race Button
                     Button(action: {
-                        startRace()
+                        if !isRacing {
+                            startRace()
+                        } else if isPaused {
+                            continuRace()
+                        }
                     }) {
-                        Text(isRacing ? "Racing..." : "Start Race")
+                        Text(determineStartButtonText())
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .padding()
-                            .background(isRacing ? Color.gray : Color.green)
+                            .background(determineStartButtonColor())
                             .cornerRadius(10)
                     }
-                    .disabled(isRacing)
+                    .disabled(raceFinished)
+                    
+                    // Pause Button
+                    if isRacing && !raceFinished {
+                        Button(action: {
+                            pauseRace()
+                        }) {
+                            Text("Pause")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.orange)
+                                .cornerRadius(10)
+                        }
+                    }
                     
                     // Reset Button
                     if raceFinished {
@@ -108,8 +115,28 @@ struct HorseRacingView: View {
                         }
                     }
                 }
+                .padding(.vertical)
             }
-            .padding(.vertical)
+        }
+    }
+    
+    private func determineStartButtonText() -> String {
+        if !isRacing {
+            return "Start Race"
+        } else if isPaused {
+            return "Continue"
+        } else {
+            return "Racing..."
+        }
+    }
+    
+    private func determineStartButtonColor() -> Color {
+        if !isRacing {
+            return .green
+        } else if isPaused {
+            return .green
+        } else {
+            return .gray
         }
     }
     
@@ -123,34 +150,48 @@ struct HorseRacingView: View {
             updateHorsePositions()
         }
     }
+    
+    func pauseRace() {
+        isPaused = true
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    func continuRace() {
+        isPaused = false
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            updateHorsePositions()
+        }
+    }
 
     private func startRaceSetup() {
         isRacing = true
+        isPaused = false
         winner = nil
         raceFinished = false
         positions = Array(repeating: 20, count: 8)
-        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.2) } // Adjust horse speeds
+        horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.2) }
+        finishedHorses.removeAll()
     }
 
     private func updateHorsePositions() {
+        guard isRacing, !isPaused else { return }
+        
         let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
         
         for index in positions.indices {
             // Eğer at zaten bitiş çizgisini geçtiyse, diğer atlara odaklan
             if positions[index] >= finishLine {
-                continue // Bu atı atla ve diğer atları güncellemeye devam et
+                continue
             }
             
             // Rastgele hız ayarlaması yap
-            let speedAdjustment = Double.random(in: -0.1...0.1) // Daha küçük ayarlama
+            let speedAdjustment = Double.random(in: -0.1...0.1)
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(1.2, horseSpeeds[index])) // Hızı sınırla
+            horseSpeeds[index] = max(0.5, min(1.2, horseSpeeds[index]))
             
             // Atın konumunu güncelle
             positions[index] += CGFloat(horseSpeeds[index])
-            
-            // Debug: At hızı ve konumunu logla
-            print("Horse \(index) speed: \(horseSpeeds[index]), position: \(positions[index])")
             
             // Bitiş çizgisini geçti mi kontrol et
             if positions[index] >= finishLine {
@@ -171,17 +212,22 @@ struct HorseRacingView: View {
             timer?.invalidate()
             timer = nil
             raceFinished = true
+            isRacing = false
         }
     }
 
     private func resetRace() {
-            withAnimation {
-                positions = Array(repeating: 0, count: 8)
-                isRacing = false
-                raceFinished = false
-                finishedHorses.removeAll() // Bitiren atların listesini temizle
-            }
+        withAnimation {
+            positions = Array(repeating: 20, count: 8)
+            isRacing = false
+            isPaused = false
+            raceFinished = false
+            finishedHorses.removeAll()
+            horseSpeeds = Array(repeating: 0, count: 8)
+            timer?.invalidate()
+            timer = nil
         }
+    }
     
     func playSound(sound: String, type: String) {
         if let path = Bundle.main.path(forResource: sound, ofType: type) {
