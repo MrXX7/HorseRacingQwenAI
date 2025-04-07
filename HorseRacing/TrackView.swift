@@ -108,21 +108,28 @@ struct TrackView: View {
     }
     
     private var finishLineCheckeredPattern: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<8, id: \.self) { row in
+        let squareSize: CGFloat = 10
+        let rows = 8
+        let columns = 16
+        
+        return HStack(spacing: 0) {
+            ForEach(0..<rows, id: \.self) { row in
                 VStack(spacing: 0) {
-                    ForEach(0..<16, id: \.self) { col in
+                    ForEach(0..<columns, id: \.self) { column in
                         Rectangle()
-                            .fill((row + col) % 2 == 0 ? Color.black : Color.white)
-                            .frame(width: 10, height: 10)
+                            .fill(isSquareBlack(row: row, column: column) ? .black : .white)
+                            .frame(width: squareSize, height: squareSize)
                     }
                 }
             }
         }
-        .frame(width: 80, height: totalTrackHeight)
+        .frame(width: CGFloat(rows) * squareSize, height: CGFloat(columns) * squareSize)
         .offset(x: trackWidth/2 - 60)
     }
-    
+
+    private func isSquareBlack(row: Int, column: Int) -> Bool {
+        (row + column) % 2 == 0
+    }
     private var distanceMarkers: some View {
         ForEach(1..<5) { i in
             Rectangle()
