@@ -174,7 +174,7 @@ struct HorseRacingView: View {
         finishedHorses.removeAll()
     }
 
-    private func updateHorsePositions() {
+    func updateHorsePositions() {
         guard isRacing, !isPaused else { return }
         
         let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
@@ -185,17 +185,21 @@ struct HorseRacingView: View {
                 continue
             }
             
-            // Rastgele hız ayarlaması yap
-            let speedAdjustment = Double.random(in: -0.1...0.1)
+            // Rastgele hız ayarlaması yap - daha dengeli bir aralık kullanıyoruz
+            let speedAdjustment = Double.random(in: -0.08...0.12)
             horseSpeeds[index] += speedAdjustment
-            horseSpeeds[index] = max(0.5, min(1.2, horseSpeeds[index]))
+            
+            // Hız sınırları - minimum ve maksimum değerleri ayarladık
+            horseSpeeds[index] = max(0.6, min(1.5, horseSpeeds[index]))
             
             // Atın konumunu güncelle
             positions[index] += CGFloat(horseSpeeds[index])
             
             // Bitiş çizgisini geçti mi kontrol et
             if positions[index] >= finishLine {
-                // Kazanan atı işle (birden fazla at bitirebilir)
+                // Atın tam olarak bitiş çizgisinde durmasını sağla
+                positions[index] = finishLine
+                // Kazanan atı işle
                 finishRace(winningHorse: index)
             }
         }
