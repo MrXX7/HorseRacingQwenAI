@@ -16,7 +16,7 @@ struct HorseView: View {
             Image(systemName: "hare.fill")
             Text(name)
         }
-        .offset(x: position)  // Pozisyon mutlaka offset ile uygulanmalı
-        .frame(width: 60)     // Sabit bir genişlik
+        .offset(x: position)
+        .frame(width: 60)     
     }
 }

@@ -206,13 +206,13 @@ struct HorseRacingView: View {
     }
 
     private func finishRace(winningHorse: Int) {
-        // Kazanan atı listeye ekle
-        if !finishedHorses.contains(winningHorse) {
-            finishedHorses.append(winningHorse)
-        }
+        // Add the winning horse to the finished horses list if not already present
+        guard !finishedHorses.contains(winningHorse) else { return }
+        finishedHorses.append(winningHorse)
         
-        // Tüm atlar bitirdiyse yarışı sonlandır
+        // Check if all horses have finished the race
         if finishedHorses.count == horseNames.count {
+            // Stop the timer and update race state
             timer?.invalidate()
             timer = nil
             raceFinished = true
