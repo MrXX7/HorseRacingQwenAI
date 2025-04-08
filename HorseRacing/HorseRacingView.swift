@@ -174,36 +174,33 @@ struct HorseRacingView: View {
         finishedHorses.removeAll()
     }
 
-    func updateHorsePositions() {
+    private func updateHorsePositions() {
         guard isRacing, !isPaused else { return }
         
-        let finishLine = trackWidth - horseSize - 40 // Bitiş çizgisi konumu
+        let finishLine = trackWidth - horseSize - 40 // Finish line position accounting for horse size and padding
         
         for index in positions.indices {
-            // Eğer at zaten bitiş çizgisini geçtiyse, diğer atlara odaklan
-            if positions[index] >= finishLine {
-                continue
-            }
+            // Skip if horse already crossed the finish line
+            guard positions[index] < finishLine else { continue }
             
-            // Rastgele hız ayarlaması yap - daha dengeli bir aralık kullanıyoruz
+            // Apply random speed adjustment within balanced range
             let speedAdjustment = Double.random(in: -0.08...0.12)
             horseSpeeds[index] += speedAdjustment
             
-            // Hız sınırları - minimum ve maksimum değerleri ayarladık
-            horseSpeeds[index] = max(0.6, min(1.5, horseSpeeds[index]))
+            // Clamp speed between reasonable min/max values
+            horseSpeeds[index] = horseSpeeds[index].clamped(to: 0.6...1.5)
             
-            // Atın konumunu güncelle
+            // Update horse position
             positions[index] += CGFloat(horseSpeeds[index])
             
-            // Bitiş çizgisini geçti mi kontrol et
+            // Check for finish line crossing
             if positions[index] >= finishLine {
-                // Atın tam olarak bitiş çizgisinde durmasını sağla
-                positions[index] = finishLine
-                // Kazanan atı işle
+                positions[index] = finishLine // Snap to exact finish position
                 finishRace(winningHorse: index)
             }
         }
     }
+    
 
     private func finishRace(winningHorse: Int) {
         // Add the winning horse to the finished horses list if not already present
@@ -244,7 +241,11 @@ struct HorseRacingView: View {
         }
     }
 }
-
+extension Comparable {
+    func clamped(to limits: ClosedRange<Self>) -> Self {
+        return min(max(self, limits.lowerBound), limits.upperBound)
+    }
+}
 struct HorseRacingView_Previews: PreviewProvider {
     static var previews: some View {
         HorseRacingView()
