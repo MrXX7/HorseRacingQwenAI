@@ -23,10 +23,13 @@ struct HorseRacingView: View {
     @State private var horseSpeeds: [Double] = Array(repeating: 0, count: 8)
     @State private var timer: Timer? = nil
     @State private var finishedHorses: [Int] = []
+    @State private var scrollPosition: CGFloat = 0
+    @State private var scrollProxy: ScrollViewProxy? = nil
     
     let trackWidth: CGFloat = UIScreen.main.bounds.width * 2 // Track width
     let horseSpacing: CGFloat = 20
     let horseSize: CGFloat = 60
+    let screenWidth = UIScreen.main.bounds.width
     
     var body: some View {
         ZStack {
@@ -58,16 +61,21 @@ struct HorseRacingView: View {
                 .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                 
                 // Race Track with ScrollView
-                ScrollView(.horizontal, showsIndicators: false) {
-                    TrackView(positions: $positions,
-                              isRacing: $isRacing,
-                              horseNames: horseNames,
-                              trackWidth: trackWidth,
-                              horseSpacing: horseSpacing,
-                              horseSize: horseSize)
-                    .frame(width: trackWidth)
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        TrackView(positions: $positions,
+                                  isRacing: $isRacing,
+                                  horseNames: horseNames,
+                                  trackWidth: trackWidth,
+                                  horseSpacing: horseSpacing,
+                                  horseSize: horseSize)
+                        .frame(width: trackWidth)
+                        .onAppear {
+                            self.scrollProxy = proxy
+                        }
+                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
                 
                 HStack(spacing: 20) {
                     // Start/Continue Race Button
@@ -148,6 +156,7 @@ struct HorseRacingView: View {
         // Start the race timer
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             updateHorsePositions()
+            updateScrollPosition()
         }
     }
     
@@ -161,6 +170,7 @@ struct HorseRacingView: View {
         isPaused = false
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             updateHorsePositions()
+            updateScrollPosition()
         }
     }
 
@@ -172,6 +182,7 @@ struct HorseRacingView: View {
         positions = Array(repeating: 20, count: 8)
         horseSpeeds = (0..<8).map { _ in Double.random(in: 0.5...1.2) }
         finishedHorses.removeAll()
+        scrollToPosition(0) // Reset scroll position
     }
 
     private func updateHorsePositions() {
@@ -201,6 +212,26 @@ struct HorseRacingView: View {
         }
     }
     
+    private func updateScrollPosition() {
+        // Find the leading horse position
+        guard let maxPosition = positions.max() else { return }
+        
+        // Calculate the scroll position to keep the leading horse visible
+        // We want the horse to be about 1/3 from the left of the screen
+        let targetScrollPosition = maxPosition - (screenWidth / 3)
+        
+        // Only scroll if the target position is ahead of current view
+        if targetScrollPosition > scrollPosition {
+            scrollToPosition(targetScrollPosition)
+        }
+    }
+    
+    private func scrollToPosition(_ position: CGFloat) {
+        scrollPosition = position
+        // Use the proxy to scroll to a specific position
+        // We use a fake view with the position as its ID
+        scrollProxy?.scrollTo(position, anchor: .leading)
+    }
 
     private func finishRace(winningHorse: Int) {
         // Add the winning horse to the finished horses list if not already present
@@ -214,6 +245,11 @@ struct HorseRacingView: View {
             timer = nil
             raceFinished = true
             isRacing = false
+            
+            // Scroll to the finish line at the end
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                scrollToPosition(trackWidth - screenWidth)
+            }
         }
     }
 
@@ -227,6 +263,7 @@ struct HorseRacingView: View {
             horseSpeeds = Array(repeating: 0, count: 8)
             timer?.invalidate()
             timer = nil
+            scrollToPosition(0)
         }
     }
     
@@ -241,11 +278,13 @@ struct HorseRacingView: View {
         }
     }
 }
+
 extension Comparable {
     func clamped(to limits: ClosedRange<Self>) -> Self {
         return min(max(self, limits.lowerBound), limits.upperBound)
     }
 }
+
 struct HorseRacingView_Previews: PreviewProvider {
     static var previews: some View {
         HorseRacingView()
