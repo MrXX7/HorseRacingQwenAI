@@ -100,10 +100,13 @@ struct TrackView: View {
     }
     
     private var startLine: some View {
-        Rectangle()
+        let startLineWidth: CGFloat = 5
+        let startLineOffset: CGFloat = 50
+        
+        return Rectangle()
             .fill(Color.white.opacity(0.6))
-            .frame(width: 5, height: totalTrackHeight)
-            .offset(x: -trackWidth/2 + 50)
+            .frame(width: startLineWidth, height: totalTrackHeight)
+            .offset(x: -trackWidth/2 + startLineOffset)
     }
     
     private var finishLineCheckeredPattern: some View {
