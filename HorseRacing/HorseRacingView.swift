@@ -9,6 +9,7 @@ import SwiftUI
 import AVFAudio
 
 struct HorseRacingView: View {
+    @State private var scrollTarget: Int = 0
     @State private var positions: [CGFloat] = Array(repeating: 20, count: 8)
     @State private var isRacing = false
     @State private var isPaused = false
@@ -211,26 +212,31 @@ struct HorseRacingView: View {
             }
         }
     }
-    
+
     private func updateScrollPosition() {
-        // Find the leading horse position
-        guard let maxPosition = positions.max() else { return }
+        // Find the leading horse position and index
+        guard let maxPosition = positions.enumerated().max(by: { $0.element < $1.element }) else { return }
         
-        // Calculate the scroll position to keep the leading horse visible
-        // We want the horse to be about 1/3 from the left of the screen
-        let targetScrollPosition = maxPosition - (screenWidth / 3)
+        // Update scroll target to the leading horse's index
+        scrollTarget = maxPosition.offset
+        
+        // Calculate target scroll position (center the leading horse)
+        let targetPosition = maxPosition.element - (screenWidth / 200.5)
         
         // Only scroll if the target position is ahead of current view
-        if targetScrollPosition > scrollPosition {
-            scrollToPosition(targetScrollPosition)
+        if targetPosition > scrollPosition {
+            scrollPosition = targetPosition
+            withAnimation(.easeInOut(duration: 0.5)) {
+                scrollProxy?.scrollTo(scrollTarget, anchor: .leading)
+            }
         }
     }
-    
+
     private func scrollToPosition(_ position: CGFloat) {
         scrollPosition = position
-        // Use the proxy to scroll to a specific position
-        // We use a fake view with the position as its ID
-        scrollProxy?.scrollTo(position, anchor: .leading)
+        withAnimation(.easeInOut(duration: 0.5)) {
+            scrollProxy?.scrollTo(scrollTarget, anchor: .leading)
+        }
     }
 
     private func finishRace(winningHorse: Int) {

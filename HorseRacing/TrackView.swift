@@ -90,11 +90,10 @@ struct TrackView: View {
     }
     
     private var laneDividers: some View {
-        VStack(spacing: horseSpacing + 25) {
-            ForEach(0..<9, id: \.self) { _ in
-                Rectangle()
-                    .fill(Color.white.opacity(0.4))
-                    .frame(height: 2)
+        VStack(spacing: laneHeight) {
+            ForEach(0..<8, id: \.self) { _ in
+                Divider()
+                    .background(Color.white.opacity(0.4))
                     .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
             }
         }
