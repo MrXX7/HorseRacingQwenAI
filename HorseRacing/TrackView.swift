@@ -125,13 +125,17 @@ struct TrackView: View {
                 }
             }
         }
-        .frame(width: CGFloat(rows) * squareSize, height: CGFloat(columns) * squareSize)
-        .offset(x: trackWidth/2 - 60)
+        .frame(
+            width: CGFloat(rows) * squareSize,
+            height: CGFloat(columns) * squareSize
+        )
+        .offset(x: trackWidth / 2 - 60)
     }
 
     private func isSquareBlack(row: Int, column: Int) -> Bool {
-        (row + column) % 2 == 0
+        return (row + column) % 2 == 0
     }
+    
     private var distanceMarkers: some View {
         ForEach(1..<5) { i in
             Rectangle()
