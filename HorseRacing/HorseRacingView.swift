@@ -214,20 +214,22 @@ struct HorseRacingView: View {
     }
 
     private func updateScrollPosition() {
-        // Find the leading horse position and index
-        guard let maxPosition = positions.enumerated().max(by: { $0.element < $1.element }) else { return }
-        
-        // Update scroll target to the leading horse's index
-        scrollTarget = maxPosition.offset
+        // Find the leading horse position that hasn't finished yet
+        let unfinishedHorses = positions.enumerated().filter { $0.element < trackWidth - horseSize - 40 }
+        guard let maxPosition = unfinishedHorses.max(by: { $0.element < $1.element }) else { return }
         
         // Calculate target scroll position (center the leading horse)
-        let targetPosition = maxPosition.element - (screenWidth / 200.5)
+        let targetPosition = maxPosition.element - (screenWidth / 2.5)
+        
+        // Ensure we don't scroll past the finish line
+        let maxScrollPosition = trackWidth - screenWidth
+        let clampedPosition = min(targetPosition, maxScrollPosition)
         
         // Only scroll if the target position is ahead of current view
-        if targetPosition > scrollPosition {
-            scrollPosition = targetPosition
+        if clampedPosition > scrollPosition {
+            scrollPosition = clampedPosition
             withAnimation(.easeInOut(duration: 0.5)) {
-                scrollProxy?.scrollTo(scrollTarget, anchor: .leading)
+                scrollProxy?.scrollTo(maxPosition.offset, anchor: .leading)
             }
         }
     }
