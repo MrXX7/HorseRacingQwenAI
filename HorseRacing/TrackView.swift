@@ -16,6 +16,10 @@ struct TrackView: View {
     let horseSpacing: CGFloat
     let horseSize: CGFloat
     
+    // MARK: - States & Winners
+    @State private var winnerName: String = ""
+    @State private var showWinner: Bool = false
+    
     // MARK: - Constants
     private let laneHeight: CGFloat = 45
     private let lanes: Int = 8
@@ -25,6 +29,7 @@ struct TrackView: View {
     private let horseNameFontSize: CGFloat = 12
     private let crowdSpacing: CGFloat = 5
     private let crowdSize: CGFloat = 15
+    private let cameraJumps: Int = 6 // Artırıldı (2-3'ten 6'ya)
     
     // MARK: - Computed Properties
     private var finishLinePosition: CGFloat {
@@ -46,6 +51,14 @@ struct TrackView: View {
         )
     }
     
+    // Find the winner
+    private var leadingHorseIndex: Int {
+        if let maxIndex = positions.indices.max(by: { positions[$0] < positions[$1] }) {
+            return maxIndex
+        }
+        return 0
+    }
+    
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
@@ -53,10 +66,59 @@ struct TrackView: View {
                 trackBackground
                 finishLine
                 horses
+                
+                // Winner Announcement
+                if showWinner && !winnerName.isEmpty {
+                    winnerAnnouncement
+                }
             }
             .frame(width: trackWidth, height: totalTrackHeight)
             .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isRacing)
+            .onChange(of: isRacing) { newValue in
+                if !newValue { // Race just ended
+                    checkWinner()
+                } else {
+                    // Reset winner display when race starts
+                    showWinner = false
+                }
+            }
         }
+    }
+    
+    // Check if we have a winner
+    private func checkWinner() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            let winnerIdx = leadingHorseIndex
+            if positions[winnerIdx] >= finishLinePosition + trackWidth/2 - 100 {
+                winnerName = horseNames[winnerIdx]
+                withAnimation(.spring()) {
+                    showWinner = true
+                }
+            }
+        }
+    }
+    
+    // Winner Announcement View
+    private var winnerAnnouncement: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.7))
+                .frame(width: 280, height: 100)
+                .shadow(radius: 10)
+            
+            VStack(spacing: 10) {
+                Text("🏆 WINNER! 🏆")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(.yellow)
+                
+                Text(winnerName)
+                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: .yellow.opacity(0.7), radius: 2, x: 0, y: 0)
+            }
+        }
+        .transition(.scale.combined(with: .opacity))
+        .zIndex(100)
     }
     
     // MARK: - Track Background
@@ -83,6 +145,11 @@ struct TrackView: View {
             
             // Crowd silhouettes
             crowdSilhouettes
+            
+            // Camera flashes
+            if isRacing {
+                cameraFlashes
+            }
         }
     }
     
@@ -171,6 +238,26 @@ struct TrackView: View {
         }
     }
     
+    // Camera flashes for more excitement
+    private var cameraFlashes: some View {
+        ForEach(0..<cameraJumps, id: \.self) { index in
+            Circle()
+                .fill(Color.white)
+                .frame(width: 8, height: 8)
+                .opacity(flashOpacity(for: index))
+                .blur(radius: 2)
+                .position(
+                    x: CGFloat.random(in: -trackWidth/2+100...trackWidth/2-100),
+                    y: index % 2 == 0 ? -totalTrackHeight/2 - 15 : totalTrackHeight/2 + 15
+                )
+        }
+    }
+    
+    private func flashOpacity(for index: Int) -> Double {
+        let baseValue = sin((Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3) + Double(index)) * 2) * 0.7 + 0.3
+        return baseValue
+    }
+    
     private var crowdSilhouettes: some View {
         Group {
             crowdRow(offsetY: -totalTrackHeight/2 - 10, isTop: true)
@@ -253,11 +340,12 @@ struct TrackView: View {
             x: positions[index] - trackWidth / 2,
             y: CGFloat(index) * laneHeight - (totalTrackHeight / 2) + (laneHeight / 2)
         )
+        .scaleEffect(index == leadingHorseIndex && isRacing ? 1.05 : 1.0)
     }
     
     // MARK: - Horse Components
     private func horseImage(index: Int) -> some View {
-        Image("a") // İstendiği gibi "a" görüntüsü korundu
+        Image("a") // "a" görüntüsü korundu
             .resizable()
             .scaledToFit()
             .frame(width: horseSize, height: horseSize)
@@ -274,7 +362,7 @@ struct TrackView: View {
             .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: 5)
-                    .fill(Color.black.opacity(0.6))
+                    .fill(index == leadingHorseIndex ? Color.yellow.opacity(0.7) : Color.black.opacity(0.6))
                     .shadow(color: .black.opacity(0.2), radius: 1)
             )
             .offset(y: -horseSize/2 - 10)
@@ -294,6 +382,7 @@ struct TrackView: View {
         .offset(x: -horseSize/2 - 10, y: -5)
     }
 }
+
 
 // MARK: - Preview Provider
 struct TrackView_Previews: PreviewProvider {
