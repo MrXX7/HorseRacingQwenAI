@@ -16,19 +16,37 @@ struct TrackView: View {
     let horseSpacing: CGFloat
     let horseSize: CGFloat
     
-    // Computed properties for better performance and readability
+    // MARK: - Constants
+    private let laneHeight: CGFloat = 45
+    private let lanes: Int = 8
+    private let startLineOffset: CGFloat = 50
+    private let finishLineOffset: CGFloat = 60
+    private let checkeredSquareSize: CGFloat = 10
+    private let horseNameFontSize: CGFloat = 12
+    private let crowdSpacing: CGFloat = 5
+    private let crowdSize: CGFloat = 15
+    
+    // MARK: - Computed Properties
     private var finishLinePosition: CGFloat {
         trackWidth / 2 - horseSize - 20
     }
     
-    private var laneHeight: CGFloat {
-        45
-    }
-    
     private var totalTrackHeight: CGFloat {
-        laneHeight * 8
+        laneHeight * CGFloat(lanes)
     }
     
+    private var trackGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(hex: "03872a").opacity(0.5),
+                Color(hex: "03872a").opacity(0.3)
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
+    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -37,6 +55,7 @@ struct TrackView: View {
                 horses
             }
             .frame(width: trackWidth, height: totalTrackHeight)
+            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isRacing)
         }
     }
     
@@ -45,16 +64,7 @@ struct TrackView: View {
         ZStack {
             // Base track with gradient
             RoundedRectangle(cornerRadius: 15)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(hex: "03872a").opacity(0.5),
-                            Color(hex: "03872a").opacity(0.3)
-                        ]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(trackGradient)
             
             // Track lanes with alternating colors
             lanesBackground
@@ -76,10 +86,10 @@ struct TrackView: View {
         }
     }
     
-    // Extracted track background components for better readability
+    // MARK: - Track Components
     private var lanesBackground: some View {
         VStack(spacing: 0) {
-            ForEach(0..<8, id: \.self) { index in
+            ForEach(0..<lanes, id: \.self) { index in
                 Rectangle()
                     .fill(index % 2 == 0 ?
                           Color(hex: "03872a").opacity(0.4) :
@@ -90,8 +100,8 @@ struct TrackView: View {
     }
     
     private var laneDividers: some View {
-        VStack(spacing: laneHeight) {
-            ForEach(0..<8, id: \.self) { _ in
+        VStack(spacing: laneHeight - 1) {
+            ForEach(0..<lanes, id: \.self) { _ in
                 Divider()
                     .background(Color.white.opacity(0.4))
                     .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
@@ -100,38 +110,48 @@ struct TrackView: View {
     }
     
     private var startLine: some View {
-        let startLineWidth: CGFloat = 5
-        let startLineOffset: CGFloat = 50
-        
-        return Rectangle()
+        Rectangle()
             .fill(Color.white.opacity(0.6))
-            .frame(width: startLineWidth, height: totalTrackHeight)
+            .frame(width: 5, height: totalTrackHeight)
             .offset(x: -trackWidth/2 + startLineOffset)
+            .overlay(
+                Text("START")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.black)
+                    .rotationEffect(.degrees(90))
+                    .offset(y: -totalTrackHeight/2 - 15)
+            )
     }
     
     private var finishLineCheckeredPattern: some View {
-        let squareSize: CGFloat = 10
-        let rows = 8
-        let columns = 16
+        let rows = Int(totalTrackHeight / checkeredSquareSize)
+        let columns = 4
         
-        return HStack(spacing: 0) {
+        return VStack(spacing: 0) {
             ForEach(0..<rows, id: \.self) { row in
-                VStack(spacing: 0) {
+                HStack(spacing: 0) {
                     ForEach(0..<columns, id: \.self) { column in
                         Rectangle()
                             .fill(isSquareBlack(row: row, column: column) ? .black : .white)
-                            .frame(width: squareSize, height: squareSize)
+                            .frame(width: checkeredSquareSize, height: checkeredSquareSize)
                     }
                 }
             }
         }
         .frame(
-            width: CGFloat(rows) * squareSize,
-            height: CGFloat(columns) * squareSize
+            width: CGFloat(columns) * checkeredSquareSize,
+            height: CGFloat(rows) * checkeredSquareSize
         )
-        .offset(x: trackWidth / 2 - 60)
+        .offset(x: trackWidth / 2 - finishLineOffset)
+        .overlay(
+            Text("FINISH")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundColor(.black)
+                .rotationEffect(.degrees(90))
+                .offset(x: checkeredSquareSize * 2, y: -totalTrackHeight/2 - 15)
+        )
     }
-
+    
     private func isSquareBlack(row: Int, column: Int) -> Bool {
         return (row + column) % 2 == 0
     }
@@ -142,32 +162,69 @@ struct TrackView: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 2, height: totalTrackHeight)
                 .offset(x: -trackWidth/2 + (trackWidth * CGFloat(i) / 5))
+                .overlay(
+                    Text("\(i * 20)%")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                        .offset(y: totalTrackHeight/2 + 10)
+                )
         }
     }
     
     private var crowdSilhouettes: some View {
         Group {
-            crowdRow(offsetY: -195)
-            crowdRow(offsetY: 195)
+            crowdRow(offsetY: -totalTrackHeight/2 - 10, isTop: true)
+            crowdRow(offsetY: totalTrackHeight/2 + 10, isTop: false)
         }
     }
     
-    private func crowdRow(offsetY: CGFloat) -> some View {
-        HStack(spacing: 5) {
-            ForEach(0..<Int(trackWidth/20), id: \.self) { _ in
-                Circle()
-                    .fill(Color.black.opacity(0.2))
-                    .frame(width: 15, height: 10)
-                    .offset(y: offsetY > 0 ? 3 : -3)
+    private func crowdRow(offsetY: CGFloat, isTop: Bool) -> some View {
+        HStack(spacing: crowdSpacing) {
+            ForEach(0..<Int(trackWidth/20), id: \.self) { index in
+                Group {
+                    if index % 5 == 0 {
+                        // Occasionally add a jumping figure
+                        jumpingFigure(isTop: isTop)
+                    } else {
+                        // Regular crowd figure
+                        Circle()
+                            .fill(Color.black.opacity(0.2))
+                            .frame(width: crowdSize, height: crowdSize * 0.7)
+                            .offset(y: isTop ? -3 : 3)
+                    }
+                }
+                .animation(
+                    isRacing ?
+                        Animation.easeInOut(duration: 0.5)
+                            .repeatForever()
+                            .delay(Double(index) * 0.05) :
+                        .default,
+                    value: isRacing
+                )
             }
         }
         .frame(width: trackWidth)
         .offset(y: offsetY)
     }
     
+    private func jumpingFigure(isTop: Bool) -> some View {
+        VStack(spacing: 0) {
+            Circle()
+                .fill(Color.black.opacity(0.3))
+                .frame(width: crowdSize, height: crowdSize)
+            
+            Rectangle()
+                .fill(Color.black.opacity(0.3))
+                .frame(width: crowdSize/3, height: crowdSize)
+        }
+        .frame(height: crowdSize * 2)
+        .scaleEffect(isRacing ? 1.2 : 1.0)
+        .offset(y: isRacing ? (isTop ? -5 : 5) : 0)
+    }
+    
     // MARK: - Finish Line
     private var finishLine: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 0) {
             ForEach(0..<4, id: \.self) { index in
                 Rectangle()
                     .fill(index % 2 == 0 ? Color.black : Color.white)
@@ -179,8 +236,10 @@ struct TrackView: View {
     
     // MARK: - Horses
     private var horses: some View {
-        ForEach(0..<8, id: \.self) { index in
+        ForEach(0..<min(positions.count, lanes), id: \.self) { index in
             horseView(index: index)
+                .transition(.scale.combined(with: .opacity))
+                .id("horse-\(index)")
         }
     }
     
@@ -188,37 +247,69 @@ struct TrackView: View {
         ZStack {
             horseImage(index: index)
             horseName(index: index)
+            laneNumber(index: index)
         }
         .offset(
             x: positions[index] - trackWidth / 2,
-            y: CGFloat(index) * laneHeight - 156
+            y: CGFloat(index) * laneHeight - (totalTrackHeight / 2) + (laneHeight / 2)
         )
     }
     
-    // MARK: - Horse Image
+    // MARK: - Horse Components
     private func horseImage(index: Int) -> some View {
-        Image("a") // Replace "a" with your horse image asset
+        Image("a") // İstendiği gibi "a" görüntüsü korundu
             .resizable()
             .scaledToFit()
             .frame(width: horseSize, height: horseSize)
-            .rotation3DEffect(
-                .degrees(isRacing ? 10 : 0),
-                axis: (x: 0, y: 1, z: 0)
-            )
             .shadow(color: .black.opacity(0.3), radius: 3)
+            .rotationEffect(isRacing ? .degrees(sin(Double(positions[index]) / 30) * 5) : .zero)
+            .offset(y: isRacing ? sin(Double(positions[index]) / 15) * 3 : 0)
     }
     
-    // MARK: - Horse Name
     private func horseName(index: Int) -> some View {
         Text(horseNames[index])
-            .font(.system(size: 12, design: .rounded))
+            .font(.system(size: horseNameFontSize, weight: .semibold, design: .rounded))
             .foregroundColor(.white)
             .padding(.horizontal, 5)
-            .background(Color.black.opacity(0.5))
-            .cornerRadius(5)
-            .offset(y: -35)
+            .padding(.vertical, 2)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(Color.black.opacity(0.6))
+                    .shadow(color: .black.opacity(0.2), radius: 1)
+            )
+            .offset(y: -horseSize/2 - 10)
+    }
+    
+    private func laneNumber(index: Int) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color.white)
+                .frame(width: 16, height: 16)
+                .shadow(color: .black.opacity(0.3), radius: 1)
+            
+            Text("\(index + 1)")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.black)
+        }
+        .offset(x: -horseSize/2 - 10, y: -5)
     }
 }
 
+// MARK: - Preview Provider
+struct TrackView_Previews: PreviewProvider {
+    static var previews: some View {
+        TrackView(
+            positions: .constant([50, 100, 150, 200, 250, 300, 350, 400]),
+            isRacing: .constant(true),
+            horseNames: ["Swift", "Shadow", "Thunder", "Lightning", "Storm", "Blaze", "Arrow", "Rocket"],
+            trackWidth: 700,
+            horseSpacing: 10,
+            horseSize: 40
+        )
+        .previewLayout(.sizeThatFits)
+        .padding()
+        .background(Color.gray.opacity(0.2))
+    }
+}
 
 
