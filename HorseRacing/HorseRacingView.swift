@@ -219,18 +219,16 @@ struct HorseRacingView: View {
         guard let maxPosition = unfinishedHorses.max(by: { $0.element < $1.element }) else { return }
         
         // Calculate target scroll position (center the leading horse)
-        let targetPosition = maxPosition.element - (screenWidth / 2.5)
+        let targetPosition = maxPosition.element - (screenWidth / 2)  // Tam merkez için 2.5 yerine 2 kullanıldı
         
         // Ensure we don't scroll past the finish line
         let maxScrollPosition = trackWidth - screenWidth
-        let clampedPosition = min(targetPosition, maxScrollPosition)
+        let clampedPosition = min(max(0, targetPosition), maxScrollPosition)  // 0'dan küçük olmamasını da sağla
         
-        // Only scroll if the target position is ahead of current view
-        if clampedPosition > scrollPosition {
+        // Yumuşak geçiş için
+        withAnimation(.easeInOut(duration: 0.3)) {
             scrollPosition = clampedPosition
-            withAnimation(.easeInOut(duration: 0.5)) {
-                scrollProxy?.scrollTo(maxPosition.offset, anchor: .leading)
-            }
+            scrollProxy?.scrollTo(maxPosition.offset, anchor: .center)  // .leading yerine .center kullanıldı
         }
     }
 

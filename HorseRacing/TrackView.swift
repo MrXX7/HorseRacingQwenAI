@@ -29,7 +29,7 @@ struct TrackView: View {
     private let horseNameFontSize: CGFloat = 12
     private let crowdSpacing: CGFloat = 5
     private let crowdSize: CGFloat = 15
-    private let cameraJumps: Int = 6 // Artırıldı (2-3'ten 6'ya)
+    private let cameraJumps: Int = 1 // Artırıldı (2-3'ten 6'ya)
     
     // MARK: - Computed Properties
     private var finishLinePosition: CGFloat {
@@ -243,7 +243,7 @@ struct TrackView: View {
         ForEach(0..<cameraJumps, id: \.self) { index in
             Circle()
                 .fill(Color.white)
-                .frame(width: 8, height: 8)
+                .frame(width: 2, height: 2)
                 .opacity(flashOpacity(for: index))
                 .blur(radius: 2)
                 .position(
